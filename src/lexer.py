@@ -30,12 +30,15 @@ def lexer(tex: str, debug: bool) -> list:
         token_val += char
         is_final_char = i == len(tex) - 1
         if len(token_val) > 1 and token_val[0] == "\\":
-            if not is_final_char and (
-                    char_type == get_char_type(tex[i+1]) and
-                    char_type != "symb"):
-                continue
-            else:
-                token_val = token_val[1:]
+            if not is_final_char:
+                next_char = tex[i+1]
+                if (char_type == get_char_type(next_char) and
+                        char_type != "symb"):
+                    continue
+                if next_char == "*" and token_val != "\\":
+                    # Allow starred commands (e.g., \tag*)
+                    continue
+            token_val = token_val[1:]
         elif token_val == "\\":
             token_type = "cmnd"
             if is_final_char:

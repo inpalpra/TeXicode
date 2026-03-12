@@ -86,6 +86,9 @@ type_dict = {
     ("cmnd", "xrightarrow"): "cmd_xarr",
     ("cmnd", "xleftarrow"): "cmd_xarr",
 
+    ("cmnd", "tag"): "cmd_tag",
+    ("cmnd", "tag*"): "cmd_tag",
+
     ("cmnd", "substack"): "cmd_sbstk",
     ("cmnd",    "\\"): "cmd_lbrk", ("cmnd", "newline"): "cmd_lbrk",
     ("cmnd", "begin"): "cmd_bgin", ("cmnd",     "end"): "cmd_end",
@@ -211,6 +214,11 @@ type_info_dict = {
                   (True, True, []),
                   (True, False, False),
                   (True, "render_xarrow")),
+    "cmd_tag":   ((False, []),
+                  (1,),
+                  (True, True, []),
+                  (True, False, False),
+                  (True, "render_tag")),
     "opn_xblw":  ((True, ["cls_xblw",]),
                   (1,),
                   (True, False, ["cmd_xarr",]),
