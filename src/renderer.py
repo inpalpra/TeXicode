@@ -2,6 +2,7 @@ import node_data
 import arts
 import symbols_art
 
+CONFIG_SCRIPT_ORDER = "sub_sup"
 
 # Matrix environment name lists (as rendered by opn_envn) and their delimiters
 MATRIX_ENVS = {
@@ -145,24 +146,23 @@ def util_vert_pile(top, ctr, ctr_horizon, btm, align) -> tuple:
 
 
 def util_script(children: list, script_type_id: int) -> tuple:
-    sketch, _, _ = children[0]
+    sketch, horizon, _ = children[0]
     shrunk = util_shrink(sketch, script_type_id, False, False)
     if shrunk != []:
         return shrunk, 0, []
 
-    smart_shrunk = util_shrink(sketch, 1 - script_type_id, True, False)
-    if smart_shrunk != []:
-        sketch = smart_shrunk
+    # If it can't be shrunk properly into its script type, we prepend ^ or _,
+    # and use the normal sized characters! Avoid the smart_shrink fallback 
+    # to superscripts since we are already prepending `_`.
+    prefix = '^' if script_type_id == 0 else '_'
+    new_sketch = []
+    for i, row in enumerate(sketch):
+        if i == horizon:
+            new_sketch.append([prefix] + row)
+        else:
+            new_sketch.append([arts.bg] + row)
 
-    top = [[]]
-    btm = [[]]
-
-    if script_type_id == 0:
-        top = sketch
-    elif script_type_id == 1:
-        btm = sketch
-
-    return util_vert_pile(top, [[arts.bg]], 0, btm, "left")
+    return new_sketch, horizon, []
 
 
 def util_shrink(sketch: list, script_type_id: int,
@@ -370,50 +370,37 @@ def render_bottom_script(children: list) -> tuple:
 
 def render_apply_scripts(base: list, scripts: list) -> tuple:
     base_sketch, base_horizon, _ = base
-    sorted_scripts = [[[]], [[]]]
+    sorted_scripts = {0: None, 1: None}
     base_position = "left"
 
-    for script_type, script_sketch in scripts:
+    for script_type, script_canvas in scripts:
         if script_type in {"top_scrpt", "btm_scrpt"}:
             base_position = "center"
         script_position = 0
         if script_type in {"sub_scrpt", "btm_scrpt"}:
             script_position = 1
-        if sorted_scripts[script_position] != [[]]:
+        if sorted_scripts[script_position] is not None:
             script_type_name = ["super", "sub"][script_position]
             raise ValueError(f"Double {script_type_name}scripts")
-        sorted_scripts[script_position] = script_sketch
+        sorted_scripts[script_position] = script_canvas
 
-    top, btm = sorted_scripts
-    # base = (base_sketch, base_horizon)
+    top_tup = sorted_scripts[0]
+    btm_tup = sorted_scripts[1]
 
     if base_position == "center":
+        top = top_tup[0] if top_tup else [[]]
+        btm = btm_tup[0] if btm_tup else [[]]
         return util_vert_pile(top, base_sketch, base_horizon, btm, "center")
 
-    ctr, ctr_horizon, _ = util_get_pile_center(len(base_sketch), base_horizon)
-    if ctr != [[]]:
-        piled_scripts = util_vert_pile(top, ctr, ctr_horizon, btm, "left")
-        return util_concat([base, piled_scripts], False, False)
+    elements = [base]
+    if CONFIG_SCRIPT_ORDER == "sub_sup":
+        if btm_tup: elements.append(btm_tup)
+        if top_tup: elements.append(top_tup)
+    else:
+        if top_tup: elements.append(top_tup)
+        if btm_tup: elements.append(btm_tup)
 
-    if top == [[]]:
-        return util_concat([base, (btm, 0, [])], False, False)
-    if btm == [[]]:
-        return util_concat([base, (top, len(top)-1, [])], False, False)
-
-    if len(top) > 1:
-        top.pop()
-        ctr = [[]]
-        ctr_horizon = 1
-    elif len(btm) > 1:
-        btm.pop(0)
-        ctr = [[]]
-    elif len(top) == 1 and len(btm) == 1:
-        top = util_shrink(top, 1, False, True)
-        btm = util_shrink(btm, 0, False, True)
-        ctr = [[arts.bg]]
-
-    piled_scripts = util_vert_pile(top, ctr, ctr_horizon, btm, "left")
-    return util_concat([base, piled_scripts], False, False)
+    return util_concat(elements, False, False)
 
 
 def render_big_delimiter(token: tuple, children: list) -> tuple:
@@ -777,7 +764,7 @@ def render(nodes: list, debug: bool) -> list:
 
         scripts = []
         for j in scripts_ids:
-            scripts.append((nodes[j][0], canvas[j][0]))
+            scripts.append((nodes[j][0], canvas[j]))
 
         if node_type == "opn_root":
             child = _render_opn_root(children_ids, nodes, canvas)
@@ -813,6 +800,10 @@ def render(nodes: list, debug: bool) -> list:
             print(arrow, end="")
         print(f"---- amps at {amps}")
 
+    if len(canvas) == 0:
+        return [[]]
+
+    return canvas[0][0]
     if len(canvas) == 0:
         return [[]]
 
