@@ -24,6 +24,8 @@ micropython/
 
 # personal stuff
 nohup.out
+.venv/
+uv.lock
 
 # apple
 .DS_Store

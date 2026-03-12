@@ -1,0 +1,18 @@
+[project]
+name = "TeXicode"
+version = "1.0.1"
+description = "TeX math expressions into Unicode art"
+readme = "README.md"
+requires-python = ">=3.8"
+dependencies = []
+
+[project.scripts]
+txc = "main:main"
+
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools]
+package-dir = {"" = "src"}
+py-modules = ["main", "lexer", "arts", "parser", "node_data", "symbols_art", "renderer", "pipeline"]
