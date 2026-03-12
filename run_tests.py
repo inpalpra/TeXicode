@@ -2,12 +2,12 @@
 
 import subprocess
 import sys
+import os
 
 # Add tests directory to path so we can import test_data
-import os
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), 'tests')))
 
-from test_data import CORE_TESTS, ALIGNMENT_TESTS, MATRIX_TESTS, OVERSET_TESTS, MATRIX_BRACE_TESTS
+import test_data
 
 # ==========================================
 # TeXicode Regression Test Suite
@@ -24,8 +24,16 @@ def run_suite(name, tests):
         print("")
 
 if __name__ == "__main__":
-    run_suite("CORE", CORE_TESTS)
-    run_suite("ALIGNMENT", ALIGNMENT_TESTS)
-    run_suite("MATRIX", MATRIX_TESTS)
-    run_suite("OVERSET", OVERSET_TESTS)
-    run_suite("MATRIX_BRACE", MATRIX_BRACE_TESTS)
+    # Get all available suites from test_data automatically
+    # We look for any variable that ends in _TESTS (excluding the combined ALL_TESTS)
+    found_suites = []
+    for attr_name in dir(test_data):
+        if attr_name.endswith("_TESTS") and attr_name != "ALL_TESTS":
+            suite_name = attr_name[:-6] # Remove "_TESTS"
+            suite_data = getattr(test_data, attr_name)
+            if isinstance(suite_data, list):
+                found_suites.append((suite_name, suite_data))
+    
+    # Run them all (sorted alphabetically for consistency)
+    for name, tests in sorted(found_suites):
+        run_suite(name, tests)

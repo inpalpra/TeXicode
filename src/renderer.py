@@ -812,7 +812,7 @@ def render_substack(children: list) -> tuple:
 
 
 def render_end(children: list):
-    return children[0]
+    return [[]], 0, []
 
 
 def render_node(node_type: str, token: tuple, children: list) -> tuple:
@@ -845,6 +845,7 @@ def _group_children(children_ids, nodes, canvas):
                 matrix_bgin_ids.add(cid)
 
     grouped = []  # list of rendered (sketch, horizon, amps)
+    consumed_ids = set()
     i = 0
     while i < len(children_ids):
         cid = children_ids[i]
@@ -867,11 +868,13 @@ def _group_children(children_ids, nodes, canvas):
                 align_spec = ['c']
 
             matrix_rows = [canvas[cid]]
+            consumed_ids.add(cid)
             j = i + 1
             while j < len(children_ids):
                 next_cid = children_ids[j]
                 if nodes[next_cid][0] == "cmd_lbrk":
                     matrix_rows.append(canvas[next_cid])
+                    consumed_ids.add(next_cid)
                     j += 1
                 else:
                     break
@@ -881,29 +884,23 @@ def _group_children(children_ids, nodes, canvas):
         else:
             grouped.append(canvas[cid])
             i += 1
-    return grouped
+    return grouped, consumed_ids
 
 
 def _render_any_root(children_ids, nodes, canvas):
     """Generalized root rendering: group and stack/concat."""
-    grouped = _group_children(children_ids, nodes, canvas)
+    grouped, consumed_ids = _group_children(children_ids, nodes, canvas)
 
     if not grouped:
         return [[]], 0, []
 
-    has_multiline_element = False
-    for sketch, horizon, _ in grouped:
-        if len(sketch) > 1:
-            has_multiline_element = True
-            break
-
     remaining_has_lbrk = False
     for cid in children_ids:
-        if nodes[cid][0] == "cmd_lbrk":
+        if nodes[cid][0] == "cmd_lbrk" and cid not in consumed_ids:
             remaining_has_lbrk = True
             break
 
-    if remaining_has_lbrk or has_multiline_element:
+    if remaining_has_lbrk:
         return render_root(grouped)
     else:
         return util_concat(grouped, False, False)
@@ -987,7 +984,7 @@ def render(nodes: list, debug: bool) -> list:
         if node_type in ["opn_root", "opn_brac", "opn_degr", "opn_pren", "opn_brak", "opn_dllr", "opn_ddlr", "opn_text", "opn_envn", "opn_xblw"]:
             child = _render_any_root(children_ids, nodes, canvas)
         elif node_type in ["cmd_ovst", "cmd_undst", "cmd_ovbrc", "cmd_unbrc", "cmd_xarr"]:
-            grouped_children = _group_children(children_ids, nodes, canvas)
+            grouped_children, _ = _group_children(children_ids, nodes, canvas)
             sketch, horizon, amps = render_node(node_type, node_token,
                                                 grouped_children)
             child = (sketch, horizon, amps)
