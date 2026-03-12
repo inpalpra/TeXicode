@@ -1,10 +1,10 @@
 # Implementation Plan - Equation Tags
 
-## Phase 1: Prototype & Style Selection
-- [ ] Task: Create prototype script in `temp/` to explore `\tag` rendering options.
-- [ ] Task: Generate multiple stylistic options for tag padding and parentheses.
-- [ ] Task: Present options to user and get approval for the preferred style.
-- [ ] Task: Conductor - User Manual Verification 'Phase 1: Prototype & Style Selection' (Protocol in workflow.md)
+## Phase 1: Prototype & Style Selection [checkpoint: 648e6f4]
+- [x] Task: Create prototype script in `temp/` to explore `\tag` rendering options. (ee9fc4c)
+- [x] Task: Generate multiple stylistic options for tag padding and parentheses. (ee9fc4c)
+- [x] Task: Present options to user and get approval for the preferred style. (ee9fc4c)
+- [x] Task: Conductor - User Manual Verification 'Phase 1: Prototype & Style Selection' (Protocol in workflow.md) (648e6f4)
 
 ## Phase 2: Setup & Testing (Red Phase)
 - [ ] Task: Register `\tag` and `\tag*` nodes in `src/node_data.py`.
