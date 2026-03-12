@@ -166,6 +166,34 @@ unicode_scripts = {
     "/": ["ᐟ", " "], ".": ["·", " "], "∘": ["˚", " "],
 }
 
+# ANSI colors
+ansi_colors = {
+    "red":     "31",
+    "green":   "32",
+    "yellow":  "33",
+    "blue":    "34",
+    "magenta": "35",
+    "cyan":    "36",
+    "white":   "37",
+    "black":   "30"
+}
+
+ansi_bg_colors = {
+    "red":     "41",
+    "green":   "42",
+    "yellow":  "43",
+    "blue":    "44",
+    "magenta": "45",
+    "cyan":    "46",
+    "white":   "47",
+    "black":   "40"
+}
+
+# Styling characters
+# User chose 'bold' for boxed and 'slash' for cancel
+boxed_style = ("┏", "┓", "┗", "┛", "━", "┃")
+cancel_char = "\u0338"  # Slash overlay
+
 # Keep delimiter as strings, wrap when used
 delimiter = {
     "sgl": "(){}[]⌊⌋⌈⌉||‖‖",

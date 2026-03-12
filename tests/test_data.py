@@ -240,6 +240,41 @@ MATRIX_BRACE_TESTS = [
     (r"\underbrace{\begin{matrix} x_{11} & x_{12} & x_{13} & x_{14} & x_{15} & x_{16} \\ x_{21} & x_{22} & x_{23} & x_{24} & x_{25} & x_{26} \\ x_{31} & x_{32} & x_{33} & x_{34} & x_{35} & x_{36} \end{matrix}}_{btm}", "  x₁₁ x₁₂ x₁₃ x₁₄ x₁₅ x₁₆ \n  x₂₁ x₂₂ x₂₃ x₂₄ x₂₅ x₂₆ \n  x₃₁ x₃₂ x₃₃ x₃₄ x₃₅ x₃₆ \n ╰──────────┬───────────╯ \n           btm            \n"),
 ]
 
+STYLING_TESTS = [
+    (
+        r'\boxed{a + b}',
+        " ┏━━━┓\n"
+        " ┃𝑎+𝑏┃\n"
+        " ┗━━━┛"
+    ),
+    (
+        r'\boxed{\frac{a}{b}}',
+        " ┏━━━┓\n"
+        " ┃ 𝑎 ┃\n"
+        " ┃╶─╴┃\n"
+        " ┃ 𝑏 ┃\n"
+        " ┗━━━┛"
+    ),
+    (
+        r'\cancel{x}',
+        " 𝑥̸"
+    ),
+    (
+        r'\color{red}{x} + y',
+        " 𝑥+𝑦"
+    ),
+    (
+        r'\colorbox{yellow}{x^2}',
+        " 𝑥²"
+    ),
+    (
+        r'\fcolorbox{red}{blue}{x}',
+        " ┏━┓\n"
+        " ┃𝑥┃\n"
+        " ┗━┛"
+    )
+]
+
 TAG_TESTS = [
     (
         r'\tag{1} E = mc^2',
@@ -267,5 +302,5 @@ TAG_TESTS = [
     )
 ]
 
-ALL_TESTS = CORE_TESTS + ALIGNMENT_TESTS + MATRIX_TESTS + OVERSET_TESTS + MATRIX_BRACE_TESTS + TAG_TESTS
+ALL_TESTS = CORE_TESTS + ALIGNMENT_TESTS + MATRIX_TESTS + OVERSET_TESTS + MATRIX_BRACE_TESTS + STYLING_TESTS + TAG_TESTS
 

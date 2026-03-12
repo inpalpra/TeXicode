@@ -1,10 +1,11 @@
 import arts
 from lexer import lexer
 from parser import parse
-from renderer import render
+from renderer import render, set_color_mode
 
 
-def render_tex_rows(tex: str, debug: bool) -> list:
+def render_tex_rows(tex: str, debug: bool, color: bool) -> list:
+    set_color_mode(color)
     try:
         lexered = lexer(tex, debug)
     except ValueError as e:
@@ -54,7 +55,7 @@ def render_tex(tex: str, debug: bool, color: bool,
     init_arts(options)
 
     tex_art = ""
-    tex_rows = render_tex_rows(tex, debug)
+    tex_rows = render_tex_rows(tex, debug, color)
     single_line = len(tex_rows) == 1
     if context == "md_inline":
         tex_art = join_rows(tex_rows, False)

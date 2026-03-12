@@ -4,6 +4,12 @@ import symbols_art
 
 CONFIG_SCRIPT_ORDER = "sub_sup"
 
+RENDER_COLOR_MODE = False
+
+def set_color_mode(mode: bool):
+    global RENDER_COLOR_MODE
+    RENDER_COLOR_MODE = mode
+
 MATRIX_ENVS = {
     ('m','a','t','r','i','x'):          ('', ''),
     ('p','m','a','t','r','i','x'):      ('(', ')'),
@@ -805,6 +811,134 @@ def render_matrix(row_sketches, delim_left, delim_right, align_spec=None):
 
 def render_root(children: list) -> tuple:
     return util_vert_concat(children, [[arts.bg]], "left")
+
+
+def render_boxed(children: list) -> tuple:
+    sketch, horizon, _ = children[0]
+    height = len(sketch)
+    width = len(sketch[0]) if sketch else 0
+
+    tl, tr, bl, br, h, v = arts.boxed_style
+
+    new_sketch = []
+    # Top border
+    new_sketch.append([tl] + [h] * width + [tr])
+    # Content rows
+    for row in sketch:
+        new_sketch.append([v] + row + [v])
+    # Bottom border
+    new_sketch.append([bl] + [h] * width + [br])
+
+    return new_sketch, horizon + 1, []
+
+
+def render_color(children: list) -> tuple:
+    color_name_sketch, _, _ = children[0]
+    color_name = "".join(["".join([util_revert_font(c) for c in row]) for row in color_name_sketch]).strip()
+    
+    content_sketch, horizon, amps = children[1]
+
+    if not RENDER_COLOR_MODE:
+        return content_sketch, horizon, amps
+
+    ansi = arts.ansi_colors.get(color_name.lower())
+    if not ansi:
+        return content_sketch, horizon, amps
+
+    start = f"\x1b[{ansi}m"
+    end = "\x1b[0m"
+
+    new_sketch = []
+    for row in content_sketch:
+        new_row = []
+        for char in row:
+            if char != arts.bg:
+                new_row.append(f"{start}{char}{end}")
+            else:
+                new_row.append(char)
+        new_sketch.append(new_row)
+
+    return new_sketch, horizon, amps
+
+
+def render_cancel(children: list) -> tuple:
+    content_sketch, horizon, amps = children[0]
+
+    new_sketch = []
+    for row in content_sketch:
+        new_row = []
+        for char in row:
+            if char != arts.bg:
+                new_row.append(char + arts.cancel_char)
+            else:
+                new_row.append(char)
+        new_sketch.append(new_row)
+
+    return new_sketch, horizon, amps
+
+
+def render_colorbox(children: list) -> tuple:
+    color_name_sketch, _, _ = children[0]
+    color_name = "".join(["".join([util_revert_font(c) for c in row]) for row in color_name_sketch]).strip()
+
+    content_sketch, horizon, amps = children[1]
+
+    if not RENDER_COLOR_MODE:
+        return content_sketch, horizon, amps
+
+    ansi = arts.ansi_bg_colors.get(color_name.lower())
+    if not ansi:
+        return content_sketch, horizon, amps
+
+    start = f"\x1b[{ansi}m"
+    end = "\x1b[0m"
+
+    new_sketch = []
+    for row in content_sketch:
+        new_row = [f"{start}{char}{end}" for char in row]
+        new_sketch.append(new_row)
+
+    return new_sketch, horizon, amps
+
+
+def render_fcolorbox(children: list) -> tuple:
+    border_color_sketch, _, _ = children[0]
+    border_color = "".join(["".join([util_revert_font(c) for c in row]) for row in border_color_sketch]).strip()
+
+    bg_color_sketch, _, _ = children[1]
+    bg_color = "".join(["".join([util_revert_font(c) for c in row]) for row in bg_color_sketch]).strip()
+
+    # First box it
+    sketch, horizon, _ = render_boxed([children[2]])
+
+    if not RENDER_COLOR_MODE:
+        return sketch, horizon, []
+
+    border_ansi = arts.ansi_colors.get(border_color.lower())
+    bg_ansi = arts.ansi_bg_colors.get(bg_color.lower())
+
+    new_sketch = []
+    for r in range(len(sketch)):
+        new_row = []
+        for c in range(len(sketch[0])):
+            char = sketch[r][c]
+            is_border = (r == 0 or r == len(sketch)-1 or c == 0 or c == len(sketch[0])-1)
+
+            ansi_parts = []
+            if is_border and border_ansi:
+                ansi_parts.append(border_ansi)
+            if bg_ansi:
+                ansi_parts.append(bg_ansi)
+
+            if ansi_parts:
+                start = f"\x1b[{';'.join(ansi_parts)}m"
+                end = "\x1b[0m"
+                new_row.append(f"{start}{char}{end}")
+            else:
+                new_row.append(char)
+        new_sketch.append(new_row)
+
+    return new_sketch, horizon, []
 
 
 def render_substack(children: list) -> tuple:
