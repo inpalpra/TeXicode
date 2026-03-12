@@ -31,6 +31,6 @@ TeXicode (TeX to Unicode) is a tool that renders TeX math expressions into Unico
 
 ## Roadmap
 - **Styling Commands:** `\mathbf`, `\mathcal`, etc.
-- **Graceful Degradation:** fallback for unsupported commands.
+- **Graceful Degradation:** Intelligent fallback for unsupported commands and environments that reconstructs raw LaTeX source instead of crashing or showing uninformative markers.
 - **Spacing & Operators:** `\quad`, `\enspace`, and better operator spacing.
 - **Markdown Mode:** improvements to markdown file processing.

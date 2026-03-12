@@ -319,5 +319,24 @@ TAG_TESTS = [
     )
 ]
 
-ALL_TESTS = CORE_TESTS + ALIGNMENT_TESTS + MATRIX_TESTS + OVERSET_TESTS + MATRIX_BRACE_TESTS + STYLING_TESTS + COLOR_TESTS + TAG_TESTS
+GRACEFUL_DEGRADATION_TESTS = [
+    (
+        r'\unknown{x}',
+        r"\unknown{𝑥}"
+    ),
+    (
+        r'\unknown{\frac{1}{2}}',
+        "          {1}  \n"
+        r"\unknown{╶───╴}" + "\n"
+        "          {2}  "
+    ),
+    (
+        r'\begin{myfile} x \end{myfile}',
+        "\\begin{myfile}\n"
+        "𝑥             \n"
+        "\\end{myfile}  "
+    )
+]
+
+ALL_TESTS = CORE_TESTS + ALIGNMENT_TESTS + MATRIX_TESTS + OVERSET_TESTS + MATRIX_BRACE_TESTS + STYLING_TESTS + COLOR_TESTS + TAG_TESTS + GRACEFUL_DEGRADATION_TESTS
 

@@ -17,5 +17,6 @@
 - **Connected Glyphs:** Symbols such as sums and square roots must use connecting Unicode characters to form a cohesive visual unit.
 
 ## Error Handling
-- **Graceful Degradation:** Unsupported LaTeX commands should be rendered as a placeholder (e.g., `?`) rather than causing a system failure.
+- **Graceful Degradation:** Unsupported LaTeX commands and environments should be rendered as raw LaTeX source rather than causing a system failure or showing uninformative placeholders (like `?`).
+- **Source Reconstruction:** When degradation occurs, the system should attempt to reconstruct and display the original LaTeX source text, maintaining readability of the unsupported construct.
 - **Informative Debugging:** Provide a `-d` debug flag to help users identify parsing or lexing issues.

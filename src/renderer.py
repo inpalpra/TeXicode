@@ -84,7 +84,7 @@ def util_concat(children: list, concat_line: bool, align_amp: bool) -> tuple:
     concated_amps = []
 
     for sketch, horizon, amps in children:
-        if amps:
+        if align_amp and amps:
             contain_amp = True
             continue
         h_sky = horizon
@@ -97,8 +97,7 @@ def util_concat(children: list, concat_line: bool, align_amp: bool) -> tuple:
         concated_sketch.append([])
 
     for sketch, horizon, amps in children:
-        if amps:
-            # concated_horizon = len(concated_sketch[0])
+        if align_amp and amps:
             concated_amps.append(len(concated_sketch[0]))
             continue
 
@@ -667,12 +666,16 @@ def render_concat_line_no_align_amp(children: list) -> tuple:
 
 
 def render_begin(children: list):
-    env_name = children[0][0]
-    if env_name in ([['a', 'l', 'i', 'g', 'n']],
-                    [['a', 'l', 'i', 'g', 'n', '*']]):
+    env_name_sketch, env_name_horizon, _ = children[0]
+    
+    # Check if it's a known environment
+    name_tuple = _env_name_to_tuple(env_name_sketch)
+    
+    # Standard environments
+    if name_tuple in (('a', 'l', 'i', 'g', 'n'),
+                      ('a', 'l', 'i', 'g', 'n', '*')):
         return util_concat(children[1:], True, True)
 
-    name_tuple = _env_name_to_tuple(env_name)
     if name_tuple in MULTI_LINE_ENVS:
         if name_tuple == ('a','r','r','a','y'):
             return util_concat(children[2:], True, True)
@@ -680,7 +683,34 @@ def render_begin(children: list):
             return util_concat(children[1:], True, False)
         return util_concat(children[1:], True, True)
 
-    return render_concat_line_no_align_amp(children[1:])
+    # Unknown environment fallback
+    # Revert font for name (e.g. 𝑢𝑛𝑘𝑛𝑜𝑤𝑛 -> unknown)
+    reverted_name = []
+    for row in env_name_sketch:
+        reverted_name.append([util_revert_font(c) for c in row])
+    env_name_reverted = (reverted_name, env_name_horizon, [])
+
+    begin_prefix = ([list("\\begin{")], 0, [])
+    end_prefix = ([list("\\end{")], 0, [])
+    suffix = ([list("}")], 0, [])
+    
+    begin_tag = util_concat([begin_prefix, env_name_reverted, suffix], False, False)
+    end_tag = util_concat([end_prefix, env_name_reverted, suffix], False, False)
+    
+    # Content is children[1:]
+    # Treat \\ as newline (render_root does this)
+    # Ignore & (render_root does this by using util_concat(grouped) where grouped ignores amps)
+    # Actually children[1:] contains already rendered rows (possibly with amps)
+    content = util_concat(children[1:], True, False)
+    
+    # We use util_vert_pile for left aligned stack
+    res_sketch, res_horizon, _ = util_vert_pile(
+        begin_tag[0], 
+        content[0], content[1], 
+        end_tag[0], 
+        align="left"
+    )
+    return res_sketch, res_horizon, []
 
 
 def _env_name_to_tuple(sketch):
@@ -948,22 +978,52 @@ def render_end(children: list):
     return [[]], 0, []
 
 
+def render_fallback(token, children) -> tuple:
+    """Reconstructs source LaTeX for unknown commands or nodes."""
+    token_type, token_val = token
+    # If it's a command, prepend backslash
+    name_str = "\\" + token_val if token_type == "cmnd" else token_val
+    
+    # Start with the command name
+    res_sketch = [[c for c in name_str]]
+    res_horizon = 0
+    
+    # We will build a list of (sketch, horizon, amps) to concat
+    elements = [(res_sketch, res_horizon, [])]
+    for child in children:
+        # Wrap each child in literal braces
+        lbrac = ([["{"]], 0, [])
+        rbrac = ([["}"]], 0, [])
+        elements.extend([lbrac, child, rbrac])
+        
+    return util_concat(elements, False, False)
+
+
 def render_node(node_type: str, token: tuple, children: list) -> tuple:
-    if node_type not in node_data.type_info_dict.keys():
-        raise ValueError(f"Undefined control sequence {token[1]}")
+    try:
+        if node_type not in node_data.type_info_dict.keys():
+            return render_fallback(token, children)
 
-    rendering_info = node_data.type_info_dict[node_type][4]
-    require_token = rendering_info[0]
-    function_name = rendering_info[1]
-    rendering_function = globals().get(function_name)
+        rendering_info = node_data.type_info_dict[node_type][4]
+        require_token = rendering_info[0]
+        function_name = rendering_info[1]
+        rendering_function = globals().get(function_name)
 
-    if not callable(rendering_function):
-        raise ValueError(f"Unknown Function {function_name} (internal error)")
+        if not callable(rendering_function):
+            return render_fallback(token, children)
 
-    if require_token:
-        return rendering_function(token, children)
-    else:
-        return rendering_function(children)
+        if require_token:
+            res = rendering_function(token, children)
+        else:
+            res = rendering_function(children)
+            
+        # If it returned '?' as a leaf, treat as unknown
+        if node_type == "cmd_leaf" and res[0] == [["?"]]:
+            return render_fallback(token, children)
+            
+        return res
+    except Exception:
+        return render_fallback(token, children)
 
 
 def _group_children(children_ids, nodes, canvas):
@@ -1039,6 +1099,35 @@ def _render_any_root(children_ids, nodes, canvas):
         return util_concat(grouped, False, False)
 
 
+def preprocess_ast_for_unknown_cmds(nodes: list) -> None:
+    """
+    Finds unknown cmd_leaf nodes and adopts subsequent opn_brac siblings
+    as their children so they can be wrapped in braces during fallback.
+    """
+    for i in range(len(nodes)):
+        children_ids = nodes[i][2]
+        if not children_ids:
+            continue
+            
+        new_children = []
+        skip = 0
+        for idx, cid in enumerate(children_ids):
+            if skip > 0:
+                skip -= 1
+                continue
+            new_children.append(cid)
+            cnode = nodes[cid]
+            # If it's a command not in the type_dict, it's unknown
+            if cnode[0] == "cmd_leaf" and cnode[1][0] == "cmnd" and cnode[1][1] not in node_data.type_dict:
+                # Consume following opn_brac nodes
+                j = idx + 1
+                while j < len(children_ids) and nodes[children_ids[j]][0] == "opn_brac":
+                    cnode[2].append(children_ids[j])
+                    skip += 1
+                    j += 1
+        nodes[i][2][:] = new_children
+
+
 def preprocess_ast_for_tags(nodes: list) -> None:
     """
     Walk the AST and reorder cmd_tag nodes to the end of their respective lines.
@@ -1091,6 +1180,7 @@ def preprocess_ast_for_tags(nodes: list) -> None:
 
 
 def render(nodes: list, debug: bool) -> list:
+    preprocess_ast_for_unknown_cmds(nodes)
     preprocess_ast_for_tags(nodes)
     if debug:
         print("Rendering")
