@@ -257,7 +257,7 @@ STYLING_TESTS = [
     ),
     (
         r'\cancel{x}',
-        " 𝑥̸"
+        " 𝑥̶"
     ),
     (
         r'\color{red}{x} + y',
@@ -272,6 +272,23 @@ STYLING_TESTS = [
         " ┏━┓\n"
         " ┃𝑥┃\n"
         " ┗━┛"
+    ),
+    (
+        r'\frac{\cancel{(x-1)}(x+2)}{(x-3)\cancel{(x-1)}}',
+        "  (̶𝑥̶-̶1̶)̶(𝑥+2) \n"
+        " ╶──────────╴\n"
+        "  (𝑥-3)(̶𝑥̶-̶1̶)̶ "
+    )
+]
+
+COLOR_TESTS = [
+    (
+        r'\color{red}{x} + y',
+        "\x1b[38;5;232m\x1b[48;5;255m\x1b[91m𝑥\x1b[38;5;232m+𝑦\x1b[0m"
+    ),
+    (
+        r'\colorbox{yellow}{x}',
+        "\x1b[38;5;232m\x1b[48;5;255m\x1b[43m𝑥\x1b[49m\x1b[0m"
     )
 ]
 
@@ -302,5 +319,5 @@ TAG_TESTS = [
     )
 ]
 
-ALL_TESTS = CORE_TESTS + ALIGNMENT_TESTS + MATRIX_TESTS + OVERSET_TESTS + MATRIX_BRACE_TESTS + STYLING_TESTS + TAG_TESTS
+ALL_TESTS = CORE_TESTS + ALIGNMENT_TESTS + MATRIX_TESTS + OVERSET_TESTS + MATRIX_BRACE_TESTS + STYLING_TESTS + COLOR_TESTS + TAG_TESTS
 

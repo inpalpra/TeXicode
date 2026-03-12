@@ -190,9 +190,9 @@ ansi_bg_colors = {
 }
 
 # Styling characters
-# User chose 'bold' for boxed and 'slash' for cancel
+# User chose 'bold' for boxed and 'long stroke' for cancel
 boxed_style = ("┏", "┓", "┗", "┛", "━", "┃")
-cancel_char = "\u0338"  # Slash overlay
+cancel_char = "\u0336"  # Long stroke overlay
 
 # Keep delimiter as strings, wrap when used
 delimiter = {

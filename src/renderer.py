@@ -834,28 +834,25 @@ def render_boxed(children: list) -> tuple:
 
 def render_color(children: list) -> tuple:
     color_name_sketch, _, _ = children[0]
-    color_name = "".join(["".join([util_revert_font(c) for c in row]) for row in color_name_sketch]).strip()
+    color_name = "".join(["".join([util_revert_font(c) for c in row]) for row in color_name_sketch]).strip().lower()
     
     content_sketch, horizon, amps = children[1]
 
     if not RENDER_COLOR_MODE:
         return content_sketch, horizon, amps
 
-    ansi = arts.ansi_colors.get(color_name.lower())
+    ansi = arts.ansi_colors.get(color_name)
     if not ansi:
         return content_sketch, horizon, amps
 
     start = f"\x1b[{ansi}m"
-    end = "\x1b[0m"
+    end = "\x1b[39m"
 
     new_sketch = []
     for row in content_sketch:
         new_row = []
         for char in row:
-            if char != arts.bg:
-                new_row.append(f"{start}{char}{end}")
-            else:
-                new_row.append(char)
+            new_row.append(f"{start}{char}{end}")
         new_sketch.append(new_row)
 
     return new_sketch, horizon, amps
@@ -879,19 +876,19 @@ def render_cancel(children: list) -> tuple:
 
 def render_colorbox(children: list) -> tuple:
     color_name_sketch, _, _ = children[0]
-    color_name = "".join(["".join([util_revert_font(c) for c in row]) for row in color_name_sketch]).strip()
+    color_name = "".join(["".join([util_revert_font(c) for c in row]) for row in color_name_sketch]).strip().lower()
 
     content_sketch, horizon, amps = children[1]
 
     if not RENDER_COLOR_MODE:
         return content_sketch, horizon, amps
 
-    ansi = arts.ansi_bg_colors.get(color_name.lower())
+    ansi = arts.ansi_bg_colors.get(color_name)
     if not ansi:
         return content_sketch, horizon, amps
 
     start = f"\x1b[{ansi}m"
-    end = "\x1b[0m"
+    end = "\x1b[49m"
 
     new_sketch = []
     for row in content_sketch:
@@ -903,10 +900,10 @@ def render_colorbox(children: list) -> tuple:
 
 def render_fcolorbox(children: list) -> tuple:
     border_color_sketch, _, _ = children[0]
-    border_color = "".join(["".join([util_revert_font(c) for c in row]) for row in border_color_sketch]).strip()
+    border_color = "".join(["".join([util_revert_font(c) for c in row]) for row in border_color_sketch]).strip().lower()
 
     bg_color_sketch, _, _ = children[1]
-    bg_color = "".join(["".join([util_revert_font(c) for c in row]) for row in bg_color_sketch]).strip()
+    bg_color = "".join(["".join([util_revert_font(c) for c in row]) for row in bg_color_sketch]).strip().lower()
 
     # First box it
     sketch, horizon, _ = render_boxed([children[2]])
@@ -914,8 +911,8 @@ def render_fcolorbox(children: list) -> tuple:
     if not RENDER_COLOR_MODE:
         return sketch, horizon, []
 
-    border_ansi = arts.ansi_colors.get(border_color.lower())
-    bg_ansi = arts.ansi_bg_colors.get(bg_color.lower())
+    border_ansi = arts.ansi_colors.get(border_color)
+    bg_ansi = arts.ansi_bg_colors.get(bg_color)
 
     new_sketch = []
     for r in range(len(sketch)):
@@ -932,7 +929,9 @@ def render_fcolorbox(children: list) -> tuple:
 
             if ansi_parts:
                 start = f"\x1b[{';'.join(ansi_parts)}m"
-                end = "\x1b[0m"
+                end = ""
+                if border_ansi: end += "\x1b[39m"
+                if bg_ansi: end += "\x1b[49m"
                 new_row.append(f"{start}{char}{end}")
             else:
                 new_row.append(char)

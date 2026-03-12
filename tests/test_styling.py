@@ -5,11 +5,11 @@ sys.path.insert(0, os.path.abspath(os.path.dirname(__file__)))
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../src')))
 
 import pytest
-from test_data import STYLING_TESTS
+from test_data import STYLING_TESTS, COLOR_TESTS
 from pipeline import render_tex
 
-def render(tex):
-    return render_tex(tex, debug=False, color=False, context="raw", options={"fonts": "serif"})
+def render(tex, color=False):
+    return render_tex(tex, debug=False, color=color, context="raw", options={"fonts": "serif"})
 
 @pytest.mark.parametrize("tex, expected", STYLING_TESTS)
 def test_styling_commands(tex, expected):
@@ -19,11 +19,17 @@ def test_styling_commands(tex, expected):
     """
     assert render(tex) == expected
 
-def test_color_enabled():
+@pytest.mark.parametrize("tex, expected", COLOR_TESTS)
+def test_styling_colors(tex, expected):
+    """
+    Test styling commands with color enabled.
+    """
+    assert render(tex, color=True) == expected
+
+def test_color_enabled_manual():
     """Verify that color mode actually adds ANSI codes."""
     tex = r'\color{red}{x}'
-    # We use od -c or similar check, but here we can just check for '\x1b['
     rendered = render_tex(tex, debug=False, color=True, context="raw", options={"fonts": "serif"})
-    assert "\x1b[31m" in rendered
+    assert "\x1b[91m" in rendered
     assert "𝑥" in rendered
-    assert "\x1b[0m" in rendered
+    assert "\x1b[38;5;232m" in rendered

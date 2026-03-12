@@ -18,9 +18,15 @@ def run_suite(name, tests):
     print(f"\033[0;36m{'=' * 42}\033[0m")
     print(f"\033[0;36mRunning {name} tests...\033[0m")
     print(f"\033[0;36m{'=' * 42}\033[0m")
+    
+    # Use color flag for color-related or styling suites
+    extra_args = []
+    if "COLOR" in name.upper() or "STYLING" in name.upper():
+        extra_args = ["-c"]
+        
     for test, _ in tests:
         print(f"\033[0;36m=== TEST: [ {test} ] ===\033[0m")
-        subprocess.run([sys.executable, "src/main.py", test])
+        subprocess.run([sys.executable, "src/main.py"] + extra_args + [test])
         print("")
 
 if __name__ == "__main__":

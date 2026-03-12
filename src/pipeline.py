@@ -30,14 +30,7 @@ def render_tex_rows(tex: str, debug: bool, color: bool) -> list:
 
 
 def join_rows(rendered_rows: list, color: bool) -> str:
-    tag_end = ""
-    tag_start = ""
-    if color:
-        tag_end = "\x1b[0m"
-        tag_start = "\x1b[38;5;232m\x1b[48;5;255m"
-    joined = f"{tag_end}\n{tag_start}".join(rendered_rows)
-    joined = tag_start + joined + tag_end
-    return joined
+    return "\n".join(rendered_rows)
 
 
 def init_arts(options: dict) -> None:
