@@ -3,6 +3,16 @@ import arts
 import symbols_art
 
 
+# Matrix environment name lists (as rendered by opn_envn) and their delimiters
+MATRIX_ENVS = {
+    ('m','a','t','r','i','x'):          ('', ''),
+    ('p','m','a','t','r','i','x'):      ('(', ')'),
+    ('b','m','a','t','r','i','x'):      ('[', ']'),
+    ('v','m','a','t','r','i','x'):      ('|', '|'),
+    ('V','m','a','t','r','i','x'):      ('\u2016', '\u2016'),
+}
+
+
 def util_revert_font(char: str) -> str:
     # if char.isascii():
     if ord(char) < 128:
@@ -539,11 +549,93 @@ def render_concat_line_no_align_amp(children: list) -> tuple:
 
 
 def render_begin(children: list):
-    if children[0][0] in ([['a', 'l', 'i', 'g', 'n']],
-                          [['a', 'l', 'i', 'g', 'n', '*']]):
+    env_name = children[0][0]
+    if env_name in ([['a', 'l', 'i', 'g', 'n']],
+                    [['a', 'l', 'i', 'g', 'n', '*']]):
         return util_concat(children[1:], True, True)
-    else:
-        return render_concat_line_no_align_amp(children[1:])
+    # Matrix environments: render row 1 with amp tracking
+    if len(env_name) == 1 and tuple(env_name[0]) in MATRIX_ENVS:
+        return util_concat(children[1:], True, True)
+    return render_concat_line_no_align_amp(children[1:])
+
+
+def _env_name_to_tuple(sketch):
+    """Convert env name sketch like [['b','m','a','t','r','i','x']] to tuple."""
+    if len(sketch) == 1:
+        return tuple(sketch[0])
+    return ()
+
+
+def _split_row_into_cells(sketch, amps):
+    """Split a row sketch into cells using amp column positions."""
+    if not amps:
+        return [sketch]
+    boundaries = [0] + amps + [len(sketch[0])]
+    cells = []
+    for i in range(len(boundaries) - 1):
+        start = boundaries[i]
+        end = boundaries[i + 1]
+        cell = [row[start:end] for row in sketch]
+        cells.append(cell)
+    return cells
+
+
+def render_matrix(row_sketches, delim_left, delim_right):
+    """Assemble a matrix grid from rendered row tuples.
+
+    row_sketches: list of (sketch, horizon, amps)
+    """
+    # Split each row into cells using amps
+    all_cells = []
+    row_heights = []
+    for sketch, horizon, amps in row_sketches:
+        cells = _split_row_into_cells(sketch, amps)
+        all_cells.append(cells)
+        row_heights.append(len(sketch))
+
+    num_cols = max(len(cells) for cells in all_cells)
+
+    # Measure max width per column
+    col_widths = [0] * num_cols
+    for cells in all_cells:
+        for j, cell in enumerate(cells):
+            w = len(cell[0]) if cell[0] else 0
+            col_widths[j] = max(col_widths[j], w)
+
+    # Center-pad cells and assemble each row
+    grid = []
+    for row_idx, cells in enumerate(all_cells):
+        row_h = row_heights[row_idx]
+        row_sketch = None
+        for j, cell in enumerate(cells):
+            cell_w = len(cell[0]) if cell[0] else 0
+            target_w = col_widths[j]
+            left_pad = (target_w - cell_w) // 2
+            right_pad = target_w - cell_w - left_pad
+            padded = []
+            for r in cell:
+                padded.append([arts.bg] * left_pad + r + [arts.bg] * right_pad)
+            if row_sketch is None:
+                row_sketch = padded
+            else:
+                for r in range(row_h):
+                    row_sketch[r] = row_sketch[r] + [arts.bg] + padded[r]
+        grid.extend(row_sketch)
+
+    grid_height = len(grid)
+    grid_horizon = grid_height // 2
+
+    # Add delimiters for delimited variants
+    if delim_left and delim_right:
+        left = util_delimiter(delim_left, grid_height, grid_horizon)
+        right = util_delimiter(delim_right, grid_height, grid_horizon)
+        result = []
+        for r in range(grid_height):
+            result.append(left[0][r] + [arts.bg] + grid[r]
+                          + [arts.bg] + right[0][r])
+        return result, grid_horizon, []
+
+    return grid, grid_horizon, []
 
 
 def render_root(children: list) -> tuple:
@@ -576,6 +668,94 @@ def render_node(node_type: str, token: tuple, children: list) -> tuple:
         return rendering_function(children)
 
 
+def _render_opn_root(children_ids, nodes, canvas):
+    """Special opn_root rendering: group matrix rows, concat inline content."""
+    # Phase 1: Identify which cmd_bgin nodes are matrix environments.
+    matrix_bgin_ids = set()
+    for cid in children_ids:
+        cnode = nodes[cid]
+        if cnode[0] == "cmd_bgin":
+            # Check env name from the rendered first child
+            env_sketch = canvas[cnode[2][0]]  # opn_envn result
+            name_tuple = _env_name_to_tuple(env_sketch[0])
+            if name_tuple in MATRIX_ENVS:
+                matrix_bgin_ids.add(cid)
+
+    if not matrix_bgin_ids:
+        # No matrices — use standard render_root
+        children = [canvas[cid] for cid in children_ids]
+        return render_root(children)
+
+    # Phase 2: Group matrix cmd_bgin + subsequent cmd_lbrk siblings.
+    grouped = []  # list of rendered (sketch, horizon, amps)
+    i = 0
+    while i < len(children_ids):
+        cid = children_ids[i]
+        if cid in matrix_bgin_ids:
+            cnode = nodes[cid]
+            env_sketch = canvas[cnode[2][0]]
+            name_tuple = _env_name_to_tuple(env_sketch[0])
+            delim_l, delim_r = MATRIX_ENVS[name_tuple]
+
+            matrix_rows = [canvas[cid]]  # row 1 from cmd_bgin
+            j = i + 1
+            while j < len(children_ids):
+                next_cid = children_ids[j]
+                if nodes[next_cid][0] == "cmd_lbrk":
+                    matrix_rows.append(canvas[next_cid])
+                    j += 1
+                else:
+                    break
+            i = j
+            assembled = render_matrix(matrix_rows, delim_l, delim_r)
+            grouped.append(assembled)
+        else:
+            grouped.append(canvas[cid])
+            i += 1
+
+    # Phase 3: Check if remaining content has line-break separators.
+    # If all matrix cmd_lbrk nodes were consumed, the remaining grouped
+    # items are inline content that should be joined horizontally.
+    has_line_breaks = False
+    for i_g, (_, _, amps) in enumerate(grouped):
+        # cmd_lbrk results have concat_line horizon set to sketch width
+        # when they are true line breaks (not matrix rows).
+        # A simple heuristic: if any grouped child came from a cmd_lbrk
+        # that was NOT consumed by a matrix, it's a line break.
+        pass
+
+    # Check if any remaining children_ids correspond to cmd_lbrk nodes
+    # that weren't consumed into matrices.
+    remaining_has_lbrk = False
+    i = 0
+    gi = 0
+    while i < len(children_ids):
+        cid = children_ids[i]
+        if cid in matrix_bgin_ids:
+            # Skip this bgin and its consumed cmd_lbrk siblings
+            j = i + 1
+            while j < len(children_ids):
+                if nodes[children_ids[j]][0] == "cmd_lbrk":
+                    j += 1
+                else:
+                    break
+            i = j
+            gi += 1
+        else:
+            if nodes[cid][0] == "cmd_lbrk":
+                remaining_has_lbrk = True
+                break
+            i += 1
+            gi += 1
+
+    if remaining_has_lbrk or len(grouped) == 1:
+        # Standard vertical stacking (align, or single matrix)
+        return render_root(grouped)
+    else:
+        # All inline content — join horizontally
+        return util_concat(grouped, False, False)
+
+
 def render(nodes: list, debug: bool) -> list:
     if debug:
         print("Rendering")
@@ -599,8 +779,12 @@ def render(nodes: list, debug: bool) -> list:
         for j in scripts_ids:
             scripts.append((nodes[j][0], canvas[j][0]))
 
-        sketch, horizon, amps = render_node(node_type, node_token, children)
-        child = (sketch, horizon, amps)
+        if node_type == "opn_root":
+            child = _render_opn_root(children_ids, nodes, canvas)
+        else:
+            sketch, horizon, amps = render_node(node_type, node_token,
+                                                children)
+            child = (sketch, horizon, amps)
 
         if scripts:
             child = render_apply_scripts(child, scripts)
@@ -609,20 +793,21 @@ def render(nodes: list, debug: bool) -> list:
 
         if not debug:
             continue
+        sketch, horizon, amps = child
         print(f"{node_type}")
-        for i in range(len(sketch)):
+        for di in range(len(sketch)):
             arrow = ""
-            if i == horizon:
+            if di == horizon:
                 arrow = f"<-- horizon at {horizon}"
-            print(i, "".join(sketch[i]), arrow)
+            print(di, "".join(sketch[di]), arrow)
 
         if not amps:
             continue
         print(len(str(len(sketch)))*" ", end=" ")
         blank_arrow = " "
-        for i in range(len(sketch[0])):
+        for di in range(len(sketch[0])):
             arrow = blank_arrow
-            if i in amps:
+            if di in amps:
                 blank_arrow = "-"
                 arrow = "^"
             print(arrow, end="")

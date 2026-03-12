@@ -29,3 +29,7 @@ uv.lock
 
 # apple
 .DS_Store
+
+# temp
+temp/
+chats/
