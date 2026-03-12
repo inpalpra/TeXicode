@@ -368,17 +368,13 @@ def render_sub_script(children: list) -> tuple:
 
 
 def render_top_script(children: list) -> tuple:
-    shrunk = util_shrink(children[0][0], 1, True, False)
-    if shrunk == []:
-        return children[0]
-    return shrunk, 0, []
+    # Centered scripts (like overbrace labels) should NOT be shrunk by default
+    # unless we explicitly want small font. For now, keep them full sized.
+    return children[0]
 
 
 def render_bottom_script(children: list) -> tuple:
-    shrunk = util_shrink(children[0][0], 0, True, False)
-    if shrunk == []:
-        return children[0]
-    return shrunk, 0, []
+    return children[0]
 
 
 def render_apply_scripts(base: list, scripts: list) -> tuple:
@@ -455,6 +451,109 @@ def render_fraction(children: list) -> tuple:
     fraction_line = [art[1]] * max(len(numer[0]), len(denom[0]))
     fraction_line = [art[0]] + fraction_line + [art[2]]
     return util_vert_pile(numer, [fraction_line], 0, denom, "center")
+
+
+def render_overset(children: list) -> tuple:
+    top_sketch, top_horizon, _ = children[0]
+    base_sketch, base_horizon, _ = children[1]
+    res_sketch, _, _ = util_vert_pile(top_sketch, [[]], 0, base_sketch, "center")
+    top_height = 0 if top_sketch == [[]] else len(top_sketch)
+    new_horizon = top_height + base_horizon
+    return res_sketch, new_horizon, []
+
+
+def render_underset(children: list) -> tuple:
+    btm_sketch, btm_horizon, _ = children[0]
+    base_sketch, base_horizon, _ = children[1]
+    res_sketch, _, _ = util_vert_pile(base_sketch, [[]], 0, btm_sketch, "center")
+    return res_sketch, base_horizon, []
+
+
+def util_build_brace(width, is_over):
+    if width <= 0:
+        return [[]]
+    if width == 1:
+        return [["⏞"]] if is_over else [["⏟"]]
+    if width == 2:
+        return [["╭", "╮"]] if is_over else [["╰", "╯"]]
+    
+    row = ["─"] * width
+    middle = (width - 1) // 2
+    if is_over:
+        row[0], row[-1], row[middle] = "╭", "╮", "┴"
+    else:
+        row[0], row[-1], row[middle] = "╰", "╯", "┬"
+    return [row]
+
+
+def render_overbrace(children: list) -> tuple:
+    content_sketch, content_horizon, _ = children[0]
+    content_w = len(content_sketch[0]) if content_sketch != [[]] else 0
+    brace_row = util_build_brace(content_w, True)
+    brace_w = len(brace_row[0]) if brace_row != [[]] else 0
+    
+    # Target width is the max of content and brace
+    target_w = max(content_w, brace_w)
+    
+    def pad_row(row, target):
+        diff = target - len(row)
+        left = diff // 2
+        right = diff - left
+        return [arts.bg] * left + row + [arts.bg] * right
+
+    # Assemble: content_sketch might be empty if 0
+    final_sketch = []
+    # Brace row
+    final_sketch.append(pad_row(brace_row[0], target_w))
+    # Content rows
+    for row in content_sketch:
+        final_sketch.append(pad_row(row, target_w))
+        
+    return final_sketch, 1 + content_horizon, []
+
+
+def render_underbrace(children: list) -> tuple:
+    content_sketch, content_horizon, _ = children[0]
+    content_w = len(content_sketch[0]) if content_sketch != [[]] else 0
+    brace_row = util_build_brace(content_w, False)
+    brace_w = len(brace_row[0]) if brace_row != [[]] else 0
+    
+    target_w = max(content_w, brace_w)
+    
+    def pad_row(row, target):
+        diff = target - len(row)
+        left = diff // 2
+        right = diff - left
+        return [arts.bg] * left + row + [arts.bg] * right
+
+    final_sketch = []
+    # Content rows
+    for row in content_sketch:
+        final_sketch.append(pad_row(row, target_w))
+    # Brace row
+    final_sketch.append(pad_row(brace_row[0], target_w))
+        
+    return final_sketch, content_horizon, []
+
+
+def render_xarrow(token: tuple, children: list) -> tuple:
+    if len(children) == 2:
+        below_sketch, _, _ = children[0]
+        above_sketch, _, _ = children[1]
+    else:
+        below_sketch = [[]]
+        above_sketch, _, _ = children[0]
+    above_width = len(above_sketch[0]) if above_sketch != [[]] else 0
+    below_width = len(below_sketch[0]) if below_sketch != [[]] else 0
+    text_width = max(above_width, below_width)
+    arrow_width = text_width + 2
+    if token[1] == "xrightarrow":
+        arrow_row = ["─"] * (arrow_width - 1) + [">"]
+    else:
+        arrow_row = ["<"] + ["─"] * (arrow_width - 1)
+    res_sketch, _, _ = util_vert_pile(above_sketch, [arrow_row], 0, below_sketch, "center")
+    new_horizon = len(above_sketch) if above_sketch != [[]] else 0
+    return res_sketch, new_horizon, []
 
 
 def render_accents(token: tuple, children: list) -> tuple:
@@ -721,8 +820,8 @@ def render_node(node_type: str, token: tuple, children: list) -> tuple:
         return rendering_function(children)
 
 
-def _render_opn_root(children_ids, nodes, canvas):
-    """Special opn_root rendering: group matrix/alignment rows, concat inline content."""
+def _group_children(children_ids, nodes, canvas):
+    """Group matrix/alignment rows within children_ids."""
     matrix_bgin_ids = set()
     for cid in children_ids:
         cnode = nodes[cid]
@@ -731,11 +830,6 @@ def _render_opn_root(children_ids, nodes, canvas):
             name_tuple = _env_name_to_tuple(env_sketch[0])
             if name_tuple in MULTI_LINE_ENVS:
                 matrix_bgin_ids.add(cid)
-
-    if not matrix_bgin_ids:
-        # No matrices — use standard render_root
-        children = [canvas[cid] for cid in children_ids]
-        return render_root(children)
 
     grouped = []  # list of rendered (sketch, horizon, amps)
     i = 0
@@ -750,7 +844,6 @@ def _render_opn_root(children_ids, nodes, canvas):
             # Formulate the correct align_spec
             align_spec = None
             if name_tuple == ('a','r','r','a','y'):
-                # Extract the '{lcr}' characters
                 spec_sketch, _, _ = canvas[cnode[2][1]]
                 align_spec = spec_sketch[0]
             elif name_tuple in [('a','l','i','g','n','e','d'), ('s','p','l','i','t')]:
@@ -760,7 +853,7 @@ def _render_opn_root(children_ids, nodes, canvas):
             elif name_tuple in [('g','a','t','h','e','r'), ('g','a','t','h','e','r','*')]:
                 align_spec = ['c']
 
-            matrix_rows = [canvas[cid]]  # row 1 from cmd_bgin
+            matrix_rows = [canvas[cid]]
             j = i + 1
             while j < len(children_ids):
                 next_cid = children_ids[j]
@@ -775,30 +868,31 @@ def _render_opn_root(children_ids, nodes, canvas):
         else:
             grouped.append(canvas[cid])
             i += 1
+    return grouped
+
+
+def _render_any_root(children_ids, nodes, canvas):
+    """Generalized root rendering: group and stack/concat."""
+    grouped = _group_children(children_ids, nodes, canvas)
+
+    if not grouped:
+        return [[]], 0, []
+
+    has_multiline_element = False
+    for sketch, horizon, _ in grouped:
+        if len(sketch) > 1:
+            has_multiline_element = True
+            break
 
     remaining_has_lbrk = False
-    i = 0
-    while i < len(children_ids):
-        cid = children_ids[i]
-        if cid in matrix_bgin_ids:
-            j = i + 1
-            while j < len(children_ids):
-                if nodes[children_ids[j]][0] == "cmd_lbrk":
-                    j += 1
-                else:
-                    break
-            i = j
-        else:
-            if nodes[cid][0] == "cmd_lbrk":
-                remaining_has_lbrk = True
-                break
-            i += 1
+    for cid in children_ids:
+        if nodes[cid][0] == "cmd_lbrk":
+            remaining_has_lbrk = True
+            break
 
-    if remaining_has_lbrk or len(grouped) == 1:
-        # Standard vertical stacking (align, or single matrix)
+    if remaining_has_lbrk or has_multiline_element:
         return render_root(grouped)
     else:
-        # All inline content — join horizontally
         return util_concat(grouped, False, False)
 
 
@@ -825,8 +919,13 @@ def render(nodes: list, debug: bool) -> list:
         for j in scripts_ids:
             scripts.append((nodes[j][0], canvas[j]))
 
-        if node_type == "opn_root":
-            child = _render_opn_root(children_ids, nodes, canvas)
+        if node_type in ["opn_root", "opn_brac", "opn_degr", "opn_pren", "opn_brak", "opn_dllr", "opn_ddlr", "opn_text", "opn_envn", "opn_xblw"]:
+            child = _render_any_root(children_ids, nodes, canvas)
+        elif node_type in ["cmd_ovst", "cmd_undst", "cmd_ovbrc", "cmd_unbrc", "cmd_xarr"]:
+            grouped_children = _group_children(children_ids, nodes, canvas)
+            sketch, horizon, amps = render_node(node_type, node_token,
+                                                grouped_children)
+            child = (sketch, horizon, amps)
         else:
             sketch, horizon, amps = render_node(node_type, node_token,
                                                 children)

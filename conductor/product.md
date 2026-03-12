@@ -24,10 +24,11 @@ TeXicode (TeX to Unicode) is a tool that renders TeX math expressions into Unico
 - Unicode focus (italics, box-drawing characters).
 - Modular architecture (node-based).
 - CLI and Web-based (via Pyodide) interfaces.
+- **Overset, Underset & Braces:** Support for vertical stacking (`\overset`, `\underset`, `\stackrel`) and horizontal braces (`\overbrace`, `\underbrace`).
+- **Extensible Arrows:** Support for stretched arrows with labels (`\xrightarrow`, `\xleftarrow`).
 - **Markdown Processing:** Render math in markdown files, supporting multiline equations and terminal display (e.g., by piping into a markdown renderer like `glow`).
 
 ## Roadmap
-- **Overset, Underset & Braces:** support for `\overset`, `\underset`, and large braces.
 - **Equation Tags:** numbering and tagging equations.
 - **Styling Commands:** `\mathbf`, `\mathcal`, etc.
 - **Graceful Degradation:** fallback for unsupported commands.

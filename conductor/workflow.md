@@ -15,11 +15,13 @@ All tasks follow a strict lifecycle:
 
 ### Standard Task Workflow
 
-0. **Mandatory Demo Script Phase (For New Tracks):**
-   - Every new track MUST begin with a phase dedicated to creating a `demo.py` (or equivalent) script.
-   - This script must exercise the specific test cases defined in the feature's documentation (e.g., `docs/features/*.md`).
-   - The AI agent MUST run this script and present the output to the user.
-   - The AI agent CANNOT proceed to the implementation phases until the user has explicitly approved the demo script's output (even if the output currently shows failures/placeholders).
+0. **Mandatory Demo Script Phase (Prototyping in `temp/`):**
+   - Every new track MUST begin with a prototyping phase in the `temp/` directory.
+   - The goal is to **fully solve** the problem within a standalone script or a set of temporary files in `temp/`.
+   - **Visual A/B Testing:** For any feature involving visual rendering (Unicode art, UI, etc.), the agent MUST generate multiple stylistic options (e.g., different Unicode characters, padding styles, or layouts) in a test script.
+   - The agent MUST present these options to the user and ask for their preference before finalizing the prototype.
+   - The prototype script must exercise and **successfully pass** the specific test cases defined in the feature's documentation (e.g., `docs/features/*.md`) using the user's preferred style.
+   - The AI agent CANNOT proceed to the implementation phases in the main `src/` directory until the user has explicitly approved the prototype's verified behavior and visual style.
 
 1. **Select Task:** Choose the next available task from `plan.md` in sequential order
 

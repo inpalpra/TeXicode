@@ -7,7 +7,7 @@ import sys
 import os
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), 'tests')))
 
-from test_data import CORE_TESTS, ALIGNMENT_TESTS, MATRIX_TESTS
+from test_data import CORE_TESTS, ALIGNMENT_TESTS, MATRIX_TESTS, OVERSET_TESTS, MATRIX_BRACE_TESTS
 
 # ==========================================
 # TeXicode Regression Test Suite
@@ -27,3 +27,5 @@ if __name__ == "__main__":
     run_suite("CORE", CORE_TESTS)
     run_suite("ALIGNMENT", ALIGNMENT_TESTS)
     run_suite("MATRIX", MATRIX_TESTS)
+    run_suite("OVERSET", OVERSET_TESTS)
+    run_suite("MATRIX_BRACE", MATRIX_BRACE_TESTS)

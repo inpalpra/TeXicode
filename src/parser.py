@@ -35,7 +35,7 @@ def get_script_base(node_type, nodes: list, parent_stack: list) -> int:
 
 
 def update_node_type(base_node_type: str, script_node_type) -> str:
-    if base_node_type == "ctr_base":
+    if base_node_type in ("ctr_base", "cmd_ovbrc", "cmd_unbrc"):
         return {"sup_scrpt": "top_scrpt",
                 "sub_scrpt": "btm_scrpt",
                 "cmd_lmts": "cmd_lmts"}[script_node_type]

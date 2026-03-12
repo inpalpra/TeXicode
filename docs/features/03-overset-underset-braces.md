@@ -38,6 +38,11 @@ These commands are not registered in `node_data.py` and have no render functions
 ```bash
 python src/main.py '\overset{\text{def}}{=}'
 ```
+
+$$
+\overset{\text{def}}{=}
+$$
+
 ```
  def
   =
@@ -48,6 +53,11 @@ The text "def" centered above the `=` sign.
 ```bash
 python src/main.py '\underset{x \to 0}{\lim}'
 ```
+
+$$
+\underset{x \to 0}{\lim}
+$$
+
 ```
  lim
  𝑥→0
@@ -58,6 +68,12 @@ The limit annotation below `lim`.
 ```bash
 python src/main.py '\underbrace{a + b + c}_{3 \text{ terms}}'
 ```
+
+$$
+\underbrace{a + b + c}_{3 \text{ terms}}
+$$
+
+
 ```
  𝑎+𝑏+𝑐
  ⏟─────⏟
@@ -70,6 +86,11 @@ The exact brace character can be `⏟` (U+23DF) or built from box-drawing chars.
 ```bash
 python src/main.py '\overbrace{x + y}^{2}'
 ```
+
+$$
+\overbrace{x + y}^{2}
+$$
+
 ```
    2
  ⏞───⏞
@@ -81,12 +102,22 @@ Horizontal brace above, label above the brace.
 ```bash
 python src/main.py '\stackrel{*}{\longrightarrow}'
 ```
+
+$$
+\stackrel{*}{\longrightarrow}
+$$
+
 `*` centered above a long right arrow.
 
 ### Test 6: xrightarrow
 ```bash
 python src/main.py '\xrightarrow{\text{yields}}'
 ```
+
+$$
+\xrightarrow{\text{yields}}
+$$
+
 A right arrow that stretches to fit the text "yields" above it.
 
 ## Implementation Approach
