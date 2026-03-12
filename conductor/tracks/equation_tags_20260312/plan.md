@@ -21,7 +21,7 @@
 - [x] Task: Conductor - User Manual Verification 'Phase 3: Implementation' (Protocol in workflow.md)
 
 ## Phase 4: Refinement & Regression Testing
-- [ ] Task: Verify code coverage for new changes (>80%).
-- [ ] Task: Run full regression suite (`run_tests.py` and `pytest`).
-- [ ] Task: Verify that all existing features still work (no regressions).
-- [ ] Task: Conductor - User Manual Verification 'Phase 4: Refinement & Regression Testing' (Protocol in workflow.md)
+- [x] Task: Verify code coverage for new changes (>80%).
+- [x] Task: Run full regression suite (`run_tests.py` and `pytest`).
+- [x] Task: Verify that all existing features still work (no regressions).
+- [x] Task: Conductor - User Manual Verification 'Phase 4: Refinement & Regression Testing' (Protocol in workflow.md)

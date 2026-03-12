@@ -4,5 +4,5 @@ This file tracks all major tracks for the project. Each track has its own detail
 
 ---
 
-- [ ] **Track: Implement Equation Tags based on docs/features/04-equation-tags.md**
+- [x] **Track: Implement Equation Tags based on docs/features/04-equation-tags.md**
 *Link: [./tracks/equation_tags_20260312/](./tracks/equation_tags_20260312/)*
