@@ -1,0 +1,8 @@
+{
+  "track_id": "styling_commands_20260313",
+  "type": "feature",
+  "status": "new",
+  "created_at": "2026-03-13T10:00:00Z",
+  "updated_at": "2026-03-13T10:00:00Z",
+  "description": "Implement LaTeX styling commands: \boxed, \color, \textcolor, \cancel, \bcancel, \colorbox, and \fcolorbox."
+}
