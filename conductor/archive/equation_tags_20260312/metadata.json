@@ -1,0 +1,8 @@
+{
+  "track_id": "equation_tags_20260312",
+  "type": "feature",
+  "status": "new",
+  "created_at": "2026-03-12T10:00:00Z",
+  "updated_at": "2026-03-12T10:00:00Z",
+  "description": "Implement Equation Tags based on docs/features/04-equation-tags.md"
+}
