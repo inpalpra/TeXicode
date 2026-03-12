@@ -15,6 +15,12 @@ All tasks follow a strict lifecycle:
 
 ### Standard Task Workflow
 
+0. **Mandatory Demo Script Phase (For New Tracks):**
+   - Every new track MUST begin with a phase dedicated to creating a `demo.py` (or equivalent) script.
+   - This script must exercise the specific test cases defined in the feature's documentation (e.g., `docs/features/*.md`).
+   - The AI agent MUST run this script and present the output to the user.
+   - The AI agent CANNOT proceed to the implementation phases until the user has explicitly approved the demo script's output (even if the output currently shows failures/placeholders).
+
 1. **Select Task:** Choose the next available task from `plan.md` in sequential order
 
 2. **Mark In Progress:** Before beginning work, edit `plan.md` and change the task from `[ ]` to `[~]`
@@ -65,6 +71,13 @@ All tasks follow a strict lifecycle:
 11. **Commit Plan Update:**
     - **Action:** Stage the modified `plan.md` file.
     - **Action:** Commit this change with a descriptive message (e.g., `conductor(plan): Mark task 'Create user model' as complete`).
+
+12. **Mandatory Regression Testing Phase (Track Closure):**
+    - Every track MUST include a final phase to update the project's central regression test data (e.g., `tests/test_data.py`).
+    - The AI agent MUST add the new LaTeX strings and their expected visual grids to the appropriate test data arrays.
+    - The AI agent MUST manually run the project's regression test suite (e.g., `run_tests.py` or `pytest`).
+    - The AI agent MUST present the results to the user.
+    - A track CANNOT be closed until the user has explicitly confirmed they are happy with the regression test results.
 
 ### Phase Completion Verification and Checkpointing Protocol
 
