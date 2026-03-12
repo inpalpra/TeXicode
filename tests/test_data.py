@@ -240,4 +240,32 @@ MATRIX_BRACE_TESTS = [
     (r"\underbrace{\begin{matrix} x_{11} & x_{12} & x_{13} & x_{14} & x_{15} & x_{16} \\ x_{21} & x_{22} & x_{23} & x_{24} & x_{25} & x_{26} \\ x_{31} & x_{32} & x_{33} & x_{34} & x_{35} & x_{36} \end{matrix}}_{btm}", "  x₁₁ x₁₂ x₁₃ x₁₄ x₁₅ x₁₆ \n  x₂₁ x₂₂ x₂₃ x₂₄ x₂₅ x₂₆ \n  x₃₁ x₃₂ x₃₃ x₃₄ x₃₅ x₃₆ \n ╰──────────┬───────────╯ \n           btm            \n"),
 ]
 
-ALL_TESTS = CORE_TESTS + ALIGNMENT_TESTS + MATRIX_TESTS + OVERSET_TESTS + MATRIX_BRACE_TESTS
+TAG_TESTS = [
+    (
+        r'\tag{1} E = mc^2',
+        " 𝐸=𝑚𝑐²   (1)"
+    ),
+    (
+        r'\tag*{\dagger} a = b',
+        " 𝑎=𝑏   †"
+    ),
+    (
+        r'\tag{2.1} \int_0^1 x\,dx = \frac{1}{2}',
+        " ⌠        1    \n"
+        " │₀¹𝑥 𝑑𝑥=╶─╴   (2.1)\n"
+        " ⌡        2    "
+    ),
+    (
+        r'\begin{align} a &= b \tag{1} \\ c &= d \end{align}',
+        "𝑎=𝑏   (1)\n"
+        "         \n"
+        "𝑐=𝑑      "
+    ),
+    (
+        r'\tag{1} \tag{2} a = b',
+        " 𝑎=𝑏   (1) (2)"
+    )
+]
+
+ALL_TESTS = CORE_TESTS + ALIGNMENT_TESTS + MATRIX_TESTS + OVERSET_TESTS + MATRIX_BRACE_TESTS + TAG_TESTS
+

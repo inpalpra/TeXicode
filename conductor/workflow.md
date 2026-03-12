@@ -76,7 +76,9 @@ All tasks follow a strict lifecycle:
 
 12. **Mandatory Regression Testing Phase (Track Closure):**
     - Every track MUST include a final phase to update the project's central regression test data (e.g., `tests/test_data.py`).
-    - The AI agent MUST add the new LaTeX strings and their expected visual grids to the appropriate test data arrays.
+    - **CRITICAL:** All test data (input strings and expected output grids) MUST be placed in `tests/test_data.py`. 
+    - **Lightweight Test Scripts:** Individual test files (e.g., `tests/test_tag.py`) MUST be lightweight and solely responsible for orchestrating the execution of tests against the data in `tests/test_data.py` using `pytest.mark.parametrize`.
+    - The AI agent MUST add the new LaTeX strings and their expected visual grids to the appropriate test data arrays in `tests/test_data.py`.
     - The AI agent MUST manually run the project's regression test suite (e.g., `run_tests.py` or `pytest`).
     - The AI agent MUST present the results to the user.
     - A track CANNOT be closed until the user has explicitly confirmed they are happy with the regression test results.
