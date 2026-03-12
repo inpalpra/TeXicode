@@ -61,7 +61,7 @@ Then navigate to `http://localhost:8000`.
     1. Adding a new node type or mapping in `node_data.py`.
     2. Implementing the rendering logic for that node in `renderer.py`.
     3. Adding necessary glyphs to `arts.py` or `symbols_art.py`.
-- **Testing**: While there isn't a dedicated `tests/` directory shown, `example.md` serves as a visual regression test for markdown rendering.
+- **Testing**: Testing in this repository is data-driven. A visual regression script is available at `run_tests.py`, and an automated assertion suite is available via `pytest tests/`. Both identically read from the central data arrays (like `CORE_TESTS` and `ALIGNMENT_TESTS`) defined in `tests/test_data.py`. As you implement future features (like new environments or symbols), you can simply open up `tests/test_data.py` and add the new LaTeX strings and their expected visual grids to those arrays. This immediately registers them as both an automated regression test and a visual terminal demo! Additionally, `example.md` serves as a visual regression test for markdown rendering.
 
 ## Key Files
 - `src/main.py`: CLI entry point.

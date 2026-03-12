@@ -28,7 +28,9 @@ python -m build
 python -m http.server 8000
 ```
 
-There is no automated test suite or lint configuration in this repository. For single-case validation, run `python src/main.py '<expression>'` against the exact expression or markdown file affected by your change.
+There is no automated CI test suite or lint configuration in this repository. For single-case validation, run `python src/main.py '<expression>'` against the exact expression or markdown file affected by your change.
+
+For regression testing, the repository uses a data-driven architecture. A visual regression script is available at `run_tests.py`, and an automated assertion suite is available via `pytest tests/`. Both identically read from the central data arrays (like `CORE_TESTS` and `ALIGNMENT_TESTS`) defined in `tests/test_data.py`. As you implement future features (like new environments or symbols), you can simply open up `tests/test_data.py` and add the new LaTeX strings and their expected visual grids to those arrays. This immediately registers them as both an automated regression test and a visual terminal demo!
 
 ## High-level architecture
 

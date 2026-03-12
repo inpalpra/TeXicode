@@ -4,13 +4,26 @@ import symbols_art
 
 CONFIG_SCRIPT_ORDER = "sub_sup"
 
-# Matrix environment name lists (as rendered by opn_envn) and their delimiters
 MATRIX_ENVS = {
     ('m','a','t','r','i','x'):          ('', ''),
     ('p','m','a','t','r','i','x'):      ('(', ')'),
     ('b','m','a','t','r','i','x'):      ('[', ']'),
     ('v','m','a','t','r','i','x'):      ('|', '|'),
     ('V','m','a','t','r','i','x'):      ('\u2016', '\u2016'),
+}
+
+MULTI_LINE_ENVS = {
+    ('m','a','t','r','i','x'):          ('', ''),
+    ('p','m','a','t','r','i','x'):      ('(', ')'),
+    ('b','m','a','t','r','i','x'):      ('[', ']'),
+    ('v','m','a','t','r','i','x'):      ('|', '|'),
+    ('V','m','a','t','r','i','x'):      ('\u2016', '\u2016'),
+    ('a','l','i','g','n','e','d'):      ('', ''),
+    ('s','p','l','i','t'):              ('', ''),
+    ('c','a','s','e','s'):              ('{', '.'),
+    ('g','a','t','h','e','r'):          ('', ''),
+    ('g','a','t','h','e','r','*'):      ('', ''),
+    ('a','r','r','a','y'):              ('', ''),
 }
 
 
@@ -540,9 +553,15 @@ def render_begin(children: list):
     if env_name in ([['a', 'l', 'i', 'g', 'n']],
                     [['a', 'l', 'i', 'g', 'n', '*']]):
         return util_concat(children[1:], True, True)
-    # Matrix environments: render row 1 with amp tracking
-    if len(env_name) == 1 and tuple(env_name[0]) in MATRIX_ENVS:
+
+    name_tuple = _env_name_to_tuple(env_name)
+    if name_tuple in MULTI_LINE_ENVS:
+        if name_tuple == ('a','r','r','a','y'):
+            return util_concat(children[2:], True, True)
+        if name_tuple in [('g','a','t','h','e','r'), ('g','a','t','h','e','r','*')]:
+            return util_concat(children[1:], True, False)
         return util_concat(children[1:], True, True)
+
     return render_concat_line_no_align_amp(children[1:])
 
 
@@ -567,7 +586,13 @@ def _split_row_into_cells(sketch, amps):
     return cells
 
 
-def render_matrix(row_sketches, delim_left, delim_right):
+def get_delim(delim_char, height, horizon):
+    if not delim_char or delim_char == '.':
+        return ([[] for _ in range(height)], 0, [])
+    return util_delimiter(delim_char, height, horizon)
+
+
+def render_matrix(row_sketches, delim_left, delim_right, align_spec=None):
     """Assemble a matrix grid from rendered row tuples.
 
     row_sketches: list of (sketch, horizon, amps)
@@ -580,7 +605,14 @@ def render_matrix(row_sketches, delim_left, delim_right):
         all_cells.append(cells)
         row_heights.append(len(sketch))
 
-    num_cols = max(len(cells) for cells in all_cells)
+    num_cols = max(len(cells) for cells in all_cells) if all_cells else 0
+
+    if not align_spec:
+        align_spec = ['c'] * num_cols
+    else:
+        # Extend align spec to cover extra columns if needed
+        while len(align_spec) < num_cols:
+            align_spec.append(align_spec[-1])
 
     # Measure max width per column
     col_widths = [0] * num_cols
@@ -589,19 +621,40 @@ def render_matrix(row_sketches, delim_left, delim_right):
             w = len(cell[0]) if cell[0] else 0
             col_widths[j] = max(col_widths[j], w)
 
-    # Center-pad cells and assemble each row
+    # Assemble each row with specific cell align pad
     grid = []
     for row_idx, cells in enumerate(all_cells):
         row_h = row_heights[row_idx]
         row_sketch = None
-        for j, cell in enumerate(cells):
+        for j in range(num_cols):
+            cell = cells[j] if j < len(cells) else [[]]
             cell_w = len(cell[0]) if cell[0] else 0
+            if not cell[0] and row_h > 1:
+                # empty cell but row is tall
+                cell = [[] for _ in range(row_h)]
+            elif len(cell) < row_h:
+                # pad vertically
+                pad_top = (row_h - len(cell)) // 2
+                pad_bot = row_h - len(cell) - pad_top
+                cell = [[] for _ in range(pad_top)] + cell + [[] for _ in range(pad_bot)]
+
             target_w = col_widths[j]
-            left_pad = (target_w - cell_w) // 2
-            right_pad = target_w - cell_w - left_pad
+            align = align_spec[j] if j < len(align_spec) else 'c'
+            
+            if align == 'l':
+                left_pad = 0
+                right_pad = target_w - cell_w
+            elif align == 'r':
+                left_pad = target_w - cell_w
+                right_pad = 0
+            else: # 'c'
+                left_pad = (target_w - cell_w) // 2
+                right_pad = target_w - cell_w - left_pad
+                
             padded = []
             for r in cell:
                 padded.append([arts.bg] * left_pad + r + [arts.bg] * right_pad)
+                
             if row_sketch is None:
                 row_sketch = padded
             else:
@@ -612,17 +665,30 @@ def render_matrix(row_sketches, delim_left, delim_right):
     grid_height = len(grid)
     grid_horizon = grid_height // 2
 
-    # Add delimiters for delimited variants
-    if delim_left and delim_right:
-        left = util_delimiter(delim_left, grid_height, grid_horizon)
-        right = util_delimiter(delim_right, grid_height, grid_horizon)
-        result = []
-        for r in range(grid_height):
-            result.append(left[0][r] + [arts.bg] + grid[r]
-                          + [arts.bg] + right[0][r])
-        return result, grid_horizon, []
+    # util_delimiter expands braces of height 2 to height 3. We must expand the grid too.
+    if grid_height == 2 and (delim_left in ['{', '}'] or delim_right in ['{', '}']):
+        empty_row = [[arts.bg] * len(grid[0])] if grid[0] else [[]]
+        grid = [grid[0]] + empty_row + [grid[1]]
+        grid_height = 3
+        grid_horizon = 1
 
-    return grid, grid_horizon, []
+    # Add delimiters for delimited variants
+    grid_tup = (grid, grid_horizon, [])
+    if delim_left or delim_right:
+        left_tup = get_delim(delim_left, grid_height, grid_horizon)
+        right_tup = get_delim(delim_right, grid_height, grid_horizon)
+        
+        space_tup = ([[" "]], 0, [])
+        elements = []
+        if left_tup[0] != [[]]:
+            elements.extend([left_tup, space_tup])
+        elements.append(grid_tup)
+        if right_tup[0] != [[]]:
+            elements.extend([space_tup, right_tup])
+            
+        return util_concat(elements, False, False)
+
+    return grid_tup
 
 
 def render_root(children: list) -> tuple:
@@ -656,16 +722,14 @@ def render_node(node_type: str, token: tuple, children: list) -> tuple:
 
 
 def _render_opn_root(children_ids, nodes, canvas):
-    """Special opn_root rendering: group matrix rows, concat inline content."""
-    # Phase 1: Identify which cmd_bgin nodes are matrix environments.
+    """Special opn_root rendering: group matrix/alignment rows, concat inline content."""
     matrix_bgin_ids = set()
     for cid in children_ids:
         cnode = nodes[cid]
         if cnode[0] == "cmd_bgin":
-            # Check env name from the rendered first child
             env_sketch = canvas[cnode[2][0]]  # opn_envn result
             name_tuple = _env_name_to_tuple(env_sketch[0])
-            if name_tuple in MATRIX_ENVS:
+            if name_tuple in MULTI_LINE_ENVS:
                 matrix_bgin_ids.add(cid)
 
     if not matrix_bgin_ids:
@@ -673,7 +737,6 @@ def _render_opn_root(children_ids, nodes, canvas):
         children = [canvas[cid] for cid in children_ids]
         return render_root(children)
 
-    # Phase 2: Group matrix cmd_bgin + subsequent cmd_lbrk siblings.
     grouped = []  # list of rendered (sketch, horizon, amps)
     i = 0
     while i < len(children_ids):
@@ -682,7 +745,20 @@ def _render_opn_root(children_ids, nodes, canvas):
             cnode = nodes[cid]
             env_sketch = canvas[cnode[2][0]]
             name_tuple = _env_name_to_tuple(env_sketch[0])
-            delim_l, delim_r = MATRIX_ENVS[name_tuple]
+            delim_l, delim_r = MULTI_LINE_ENVS[name_tuple]
+
+            # Formulate the correct align_spec
+            align_spec = None
+            if name_tuple == ('a','r','r','a','y'):
+                # Extract the '{lcr}' characters
+                spec_sketch, _, _ = canvas[cnode[2][1]]
+                align_spec = spec_sketch[0]
+            elif name_tuple in [('a','l','i','g','n','e','d'), ('s','p','l','i','t')]:
+                align_spec = ['r', 'l'] * 10
+            elif name_tuple == ('c','a','s','e','s'):
+                align_spec = ['l', 'l']
+            elif name_tuple in [('g','a','t','h','e','r'), ('g','a','t','h','e','r','*')]:
+                align_spec = ['c']
 
             matrix_rows = [canvas[cid]]  # row 1 from cmd_bgin
             j = i + 1
@@ -694,32 +770,17 @@ def _render_opn_root(children_ids, nodes, canvas):
                 else:
                     break
             i = j
-            assembled = render_matrix(matrix_rows, delim_l, delim_r)
+            assembled = render_matrix(matrix_rows, delim_l, delim_r, align_spec)
             grouped.append(assembled)
         else:
             grouped.append(canvas[cid])
             i += 1
 
-    # Phase 3: Check if remaining content has line-break separators.
-    # If all matrix cmd_lbrk nodes were consumed, the remaining grouped
-    # items are inline content that should be joined horizontally.
-    has_line_breaks = False
-    for i_g, (_, _, amps) in enumerate(grouped):
-        # cmd_lbrk results have concat_line horizon set to sketch width
-        # when they are true line breaks (not matrix rows).
-        # A simple heuristic: if any grouped child came from a cmd_lbrk
-        # that was NOT consumed by a matrix, it's a line break.
-        pass
-
-    # Check if any remaining children_ids correspond to cmd_lbrk nodes
-    # that weren't consumed into matrices.
     remaining_has_lbrk = False
     i = 0
-    gi = 0
     while i < len(children_ids):
         cid = children_ids[i]
         if cid in matrix_bgin_ids:
-            # Skip this bgin and its consumed cmd_lbrk siblings
             j = i + 1
             while j < len(children_ids):
                 if nodes[children_ids[j]][0] == "cmd_lbrk":
@@ -727,13 +788,11 @@ def _render_opn_root(children_ids, nodes, canvas):
                 else:
                     break
             i = j
-            gi += 1
         else:
             if nodes[cid][0] == "cmd_lbrk":
                 remaining_has_lbrk = True
                 break
             i += 1
-            gi += 1
 
     if remaining_has_lbrk or len(grouped) == 1:
         # Standard vertical stacking (align, or single matrix)
