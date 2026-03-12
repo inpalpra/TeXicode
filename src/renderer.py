@@ -79,8 +79,6 @@ def util_concat(children: list, concat_line: bool, align_amp: bool) -> tuple:
 
     for sketch, horizon, amps in children:
         if amps:
-            if not align_amp:
-                raise ValueError(f"Unexpected & at positions {amps}")
             contain_amp = True
             continue
         h_sky = horizon
@@ -111,7 +109,7 @@ def util_concat(children: list, concat_line: bool, align_amp: bool) -> tuple:
             concated_sketch[i].extend(sketch[i])
 
     if concat_line and not contain_amp:
-        concated_horizon = len(concated_sketch[0])
+        pass # concated_horizon = len(concated_sketch[0])
 
     return concated_sketch, concated_horizon, concated_amps
 
@@ -556,6 +554,21 @@ def render_xarrow(token: tuple, children: list) -> tuple:
     return res_sketch, new_horizon, []
 
 
+def render_tag(token: tuple, children: list) -> tuple:
+    sketch, horizon, amps = children[0]
+    is_starred = token[1].endswith("*")
+
+    if not is_starred:
+        new_sketch = []
+        for i in range(len(sketch)):
+            prefix = "(" if i == horizon else " "
+            suffix = ")" if i == horizon else " "
+            new_sketch.append([prefix] + sketch[i] + [suffix])
+        sketch = new_sketch
+
+    return sketch, horizon, amps
+
+
 def render_accents(token: tuple, children: list) -> tuple:
     accent_val = token[1]
     u_hex = {"acute": "\u0302", "bar": "\u0304", "breve": "\u0306",
@@ -896,7 +909,59 @@ def _render_any_root(children_ids, nodes, canvas):
         return util_concat(grouped, False, False)
 
 
+def preprocess_ast_for_tags(nodes: list) -> None:
+    """
+    Walk the AST and reorder cmd_tag nodes to the end of their respective lines.
+    Lines are typically delimited by cmd_lbrk inside environments or at the root.
+    Injects txt_leaf padding nodes for spacing.
+    """
+    original_node_count = len(nodes)
+    for i in range(original_node_count):
+        node = nodes[i]
+        children_ids = node[2]
+        if not children_ids:
+            continue
+
+        has_tag = any(nodes[cid][0] == "cmd_tag" for cid in children_ids)
+        if not has_tag:
+            continue
+
+        new_children = []
+        current_line_others = []
+        current_line_tags = []
+
+        def flush_line():
+            new_children.extend(current_line_others)
+            if current_line_tags:
+                # Add 3-space padding
+                pad3_id = len(nodes)
+                nodes.append(("txt_leaf", ("symb", "   "), [], []))
+                new_children.append(pad3_id)
+                
+                for idx, tid in enumerate(current_line_tags):
+                    if idx > 0:
+                        pad1_id = len(nodes)
+                        nodes.append(("txt_leaf", ("symb", " "), [], []))
+                        new_children.append(pad1_id)
+                    new_children.append(tid)
+
+        for cid in children_ids:
+            if nodes[cid][0] == "cmd_lbrk":
+                flush_line()
+                new_children.append(cid)
+                current_line_others = []
+                current_line_tags = []
+            elif nodes[cid][0] == "cmd_tag":
+                current_line_tags.append(cid)
+            else:
+                current_line_others.append(cid)
+                
+        flush_line()
+        node[2][:] = new_children
+
+
 def render(nodes: list, debug: bool) -> list:
+    preprocess_ast_for_tags(nodes)
     if debug:
         print("Rendering")
 
@@ -958,10 +1023,6 @@ def render(nodes: list, debug: bool) -> list:
             print(arrow, end="")
         print(f"---- amps at {amps}")
 
-    if len(canvas) == 0:
-        return [[]]
-
-    return canvas[0][0]
     if len(canvas) == 0:
         return [[]]
 
