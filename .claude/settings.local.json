@@ -1,0 +1,9 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(wc -l /Users/ppal/repos/TeXicode/src/*.py)",
+      "Bash(git -C /Users/ppal/repos/TeXicode log --oneline -20)",
+      "Bash(git -C /Users/ppal/repos/TeXicode branch -a)"
+    ]
+  }
+}
