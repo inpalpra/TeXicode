@@ -102,19 +102,39 @@ def parse_markdown(text):
     flush_text()
     return segments
 
-def render_segments(segments):
+import pipeline
+
+def render_segments_with_pipeline(segments, indent_size=4, color=True):
     """
-    Renders the segments into a final string.
-    In the prototype, we just wrap math in markers to verify detection.
+    Renders the segments using the actual TeXicode pipeline.
     """
     output = []
+    options = {"fonts": "serif"}
     for type, content in segments:
         if type == 'text':
             output.append(content)
         elif type == 'math_inline':
-            output.append(f"[MATH_INLINE: {content}]")
+            # Inline math is rendered in-place
+            try:
+                # context="raw" to avoid backticks if it's a single line
+                rendered = pipeline.render_tex(content, False, color, "raw", options)
+                output.append(rendered)
+            except Exception as e:
+                # Fallback to raw
+                print(f"DEBUG: Inline render failed for '{content}': {e}")
+                output.append(f"${content}$")
         elif type == 'math_display':
-            output.append(f"\n[MATH_DISPLAY_START]\n{content}\n[MATH_DISPLAY_END]\n")
+            # Display math is a block
+            try:
+                rendered = pipeline.render_tex(content, False, color, "raw", options)
+                # Indent each line
+                indent = " " * indent_size
+                indented_lines = [f"{indent}{line}" for line in rendered.splitlines()]
+                output.append("\n" + "\n".join(indented_lines) + "\n")
+            except Exception as e:
+                # Fallback to raw
+                print(f"DEBUG: Display render failed for '{content}': {e}")
+                output.append(f"\n$$\n{content}\n$$\n")
         elif type == 'code_inline':
             output.append(content)
         elif type == 'code_fenced':
@@ -122,6 +142,26 @@ def render_segments(segments):
     return "".join(output)
 
 if __name__ == "__main__":
+    # Test text for stylistic options
+    test_math = r"M = \begin{bmatrix} a & b \\ c & d \end{bmatrix}"
+    segments = [('math_display', test_math)]
+    
+    print("\nStylistic Option 1: 2-space indent")
+    print(render_segments_with_pipeline(segments, indent_size=2))
+    
+    print("\nStylistic Option 2: 4-space indent")
+    print(render_segments_with_pipeline(segments, indent_size=4))
+    
+    print("\nStylistic Option 3: 8-space indent")
+    print(render_segments_with_pipeline(segments, indent_size=8))
+    
+    # Test escaped dollars
+    test_text = "The price is \\$10 and $x=5$ is math."
+    print("Testing escaped dollars...")
+    segments = parse_markdown(test_text)
+    result = render_segments_with_pipeline(segments)
+    print(f"Result: {result}")
+    
     test_file = "tests/complex_markdown_test.md"
     if len(sys.argv) > 1:
         test_file = sys.argv[1]
@@ -131,11 +171,11 @@ if __name__ == "__main__":
     
     print(f"Parsing {test_file}...")
     segments = parse_markdown(content)
-    result = render_segments(segments)
+    # Defaulting to 4-space indent for the full test
+    result = render_segments_with_pipeline(segments, indent_size=4)
     
     # Write to a temporary file for inspection
     with open("temp/proto_output.md", "w") as f:
         f.write(result)
     
     print("Parsing complete. Output written to temp/proto_output.md")
-    # print(result)

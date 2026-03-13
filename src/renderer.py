@@ -757,10 +757,9 @@ def render_concat_line_no_align_amp(children: list) -> tuple:
 
 def render_begin(children: list):
     env_name_sketch, env_name_horizon, _ = children[0]
-    
+
     # Check if it's a known environment
     name_tuple = _env_name_to_tuple(env_name_sketch)
-    
     # Standard environments
     if name_tuple in (('a', 'l', 'i', 'g', 'n'),
                       ('a', 'l', 'i', 'g', 'n', '*')):
@@ -1294,7 +1293,7 @@ def render(nodes: list, debug: bool) -> list:
         for j in scripts_ids:
             scripts.append((nodes[j][0], canvas[j]))
 
-        if node_type in ["opn_root", "opn_brac", "opn_degr", "opn_pren", "opn_brak", "opn_dllr", "opn_ddlr", "opn_text", "opn_envn", "opn_xblw"]:
+        if node_type in ["opn_root", "opn_line", "opn_brac", "opn_degr", "opn_pren", "opn_brak", "opn_dllr", "opn_ddlr", "opn_text", "opn_envn", "opn_xblw"]:
             child = _render_any_root(children_ids, nodes, canvas)
         elif node_type in ["cmd_ovst", "cmd_undst", "cmd_ovbrc", "cmd_unbrc", "cmd_xarr"]:
             grouped_children, _ = _group_children(children_ids, nodes, canvas)
