@@ -117,18 +117,20 @@ def process_markdown(content, debug, color, options):
             output.append(seg_content)
         elif seg_type == 'math_inline':
             try:
-                # context="raw" to get pure unicode art without markdown code blocks
-                rendered = render_tex(seg_content, debug, color, "raw", options, raise_errors=True)
+                rendered = render_tex(seg_content, debug, color, "md_inline", options, raise_errors=True)
                 output.append(rendered)
             except Exception:
                 # Fallback to raw LaTeX
                 output.append(f"${seg_content}$")
         elif seg_type == 'math_display':
             try:
-                rendered = render_tex(seg_content, debug, color, "raw", options, raise_errors=True)
-                indent = " " * indent_size
-                indented_lines = [f"{indent}{line}" for line in rendered.splitlines()]
-                output.append("\n" + "\n".join(indented_lines) + "\n")
+                rendered = render_tex(seg_content, debug, color, "md_block", options, raise_errors=True)
+                if indent_size > 0:
+                    indent = " " * indent_size
+                    indented_lines = [f"{indent}{line}" for line in rendered.splitlines()]
+                    output.append("\n".join(indented_lines) + "\n")
+                else:
+                    output.append(rendered)
             except Exception:
                 # Fallback to raw LaTeX
                 output.append(f"\n$$\n{seg_content}\n$$\n")
