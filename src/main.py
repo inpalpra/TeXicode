@@ -110,7 +110,7 @@ def parse_markdown(text):
 def process_markdown(content, debug, color, options):
     segments = parse_markdown(content)
     output = []
-    indent_size = 2  # As per user preference from prototype phase
+    indent_size = 0  # As per user preference
     
     for seg_type, seg_content in segments:
         if seg_type == 'text':
