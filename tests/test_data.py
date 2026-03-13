@@ -26,6 +26,7 @@ MATRIX_TESTS = [
     (r"\begin{bmatrix} b_1 \\ b_2 \end{bmatrix} = \begin{bmatrix} S_{11} & S_{12} \\ S_{21} & S_{22} \end{bmatrix} \begin{bmatrix} a_1 \\ a_2 \end{bmatrix}", '⎡ 𝑏₁ ⎤   ⎡ 𝑆₁₁ 𝑆₁₂ ⎤⎡ 𝑎₁ ⎤\n⎣ 𝑏₂ ⎦ = ⎣ 𝑆₂₁ 𝑆₂₂ ⎦⎣ 𝑎₂ ⎦'),
     (r"\begin{aligned} b_1 &= S_{11}a_1 + S_{12}a_2 \\ b_2 &= S_{21}a_1 + S_{22}a_2 \end{aligned}", '𝑏₁ = 𝑆₁₁𝑎₁ + 𝑆₁₂𝑎₂\n𝑏₂ = 𝑆₂₁𝑎₁ + 𝑆₂₂𝑎₂'),
     (r"\begin{bmatrix} a & b \\ c & d \end{bmatrix}", '⎡ 𝑎 𝑏 ⎤\n⎣ 𝑐 𝑑 ⎦'),
+    (r"M = \begin{bmatrix} a & b \\ c & d \end{bmatrix}", '    ⎡ 𝑎 𝑏 ⎤\n𝑀 = ⎣ 𝑐 𝑑 ⎦'),
     (r"\begin{pmatrix} a & b \\ c & d \end{pmatrix}", '⎛ 𝑎 𝑏 ⎞\n⎝ 𝑐 𝑑 ⎠'),
     (r"\begin{bmatrix} a & b & c \\ d & e & f \\ g & h & i \end{bmatrix}", '⎡ 𝑎 𝑏 𝑐 ⎤\n⎢ 𝑑 𝑒 𝑓 ⎥\n⎣ 𝑔 ℎ 𝑖 ⎦'),
     (r"\begin{pmatrix} \frac{1}{2} & 0 \\ 0 & 1 \end{pmatrix}", '⎛  1    ⎞\n⎜ ╶─╴ 0 ⎟\n⎜  2    ⎟\n⎝  0  1 ⎠'),

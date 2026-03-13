@@ -25,3 +25,26 @@ This is a latex block
 \left(1 - \frac{x^2}{9\pi^2} \right) \cdots
 \
 \end{align*}
+
+# Display Math (`$$`)
+
+Display math blocks are collected and rendered as single expressions:
+
+$$
+M = \begin{bmatrix}
+  \alpha & \beta \\
+  \gamma & \delta
+\end{bmatrix}
+$$
+
+# Protection from Code Blocks
+
+Math delimiters are ignored inside backticks: `price is \$10` or `code with $x$`.
+
+And inside fenced code blocks:
+
+```latex
+\begin{align}
+  E &= mc^2
+\end{align}
+```
