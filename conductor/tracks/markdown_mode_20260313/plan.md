@@ -17,7 +17,7 @@
 - [x] Task: Conductor - User Manual Verification 'Implementation' (Protocol in workflow.md) a2e24ad
 
 
-## Phase 3: Regression Testing & Finalization
-- [~] Task: Run `run_tests.py` and ensure no regressions.
-- [ ] Task: Run `txc -f tests/complex_markdown_test.md` and verify the final terminal output visually.
-- [ ] Task: Conductor - User Manual Verification 'Regression Testing' (Protocol in workflow.md)
+## Phase 3: Regression Testing & Finalization [checkpoint: b8f6af9]
+- [x] Task: Run `run_tests.py` and ensure no regressions. b8f6af9
+- [x] Task: Run `txc -f tests/complex_markdown_test.md` and verify the final terminal output visually. b8f6af9
+- [x] Task: Conductor - User Manual Verification 'Regression Testing' (Protocol in workflow.md) b8f6af9
