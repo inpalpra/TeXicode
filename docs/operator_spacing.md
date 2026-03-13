@@ -100,9 +100,9 @@ This document evaluates the current state of operator spacing in TeXicode's outp
 ∀𝑥∃𝑦
 ```
 
-**Rating:** BAD
+**Rating:** GOOD
 
-**Justification:** Missing space after '∀'; Missing space after '∃'; Missing space before '∃'
+**Justification:** Spacing appears adequate
 
 ---
 
@@ -180,7 +180,7 @@ This document evaluates the current state of operator spacing in TeXicode's outp
 
 **Rating:** BAD
 
-**Justification:** Missing space before '×'; Missing space before '÷'; Missing space before '∓'; Missing space before '⋅'
+**Justification:** Missing space after '±'; Missing space after '×'; Missing space after '÷'; Missing space after '∓'; Missing space before '×'; Missing space before '÷'; Missing space before '∓'; Missing space before '⋅'
 
 ---
 
@@ -191,9 +191,9 @@ This document evaluates the current state of operator spacing in TeXicode's outp
 ∇∂∞
 ```
 
-**Rating:** BAD
+**Rating:** GOOD
 
-**Justification:** Missing space before '∂'; Missing space before '∞'
+**Justification:** Spacing appears adequate
 
 ---
 
@@ -204,9 +204,9 @@ This document evaluates the current state of operator spacing in TeXicode's outp
 …⋯⋮⋱
 ```
 
-**Rating:** BAD
+**Rating:** GOOD
 
-**Justification:** Missing space before '⋮'; Missing space before '⋯'; Missing space before '⋱'
+**Justification:** Spacing appears adequate
 
 ---
 
