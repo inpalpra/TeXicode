@@ -4,20 +4,26 @@ from parser import parse
 from renderer import render, set_color_mode
 
 
-def render_tex_rows(tex: str, debug: bool, color: bool) -> list:
+def render_tex_rows(tex: str, debug: bool, color: bool, raise_errors=False) -> list:
     set_color_mode(color)
-    try:
+    if raise_errors:
         lexered = lexer(tex, debug)
-    except ValueError as e:
-        return [f"TeXicode: lexerizing error: {e}"]
-    try:
         parsed = parse(lexered, debug)
-    except ValueError as e:
-        return [f"TeXicode: parsing error: {e}"]
-    try:
         rendered = render(parsed, debug)
-    except ValueError as e:
-        return [f"TeXicode: rendering error: {e}"]
+    else:
+        try:
+            lexered = lexer(tex, debug)
+        except ValueError as e:
+            return [f"TeXicode: lexerizing error: {e}"]
+        try:
+            parsed = parse(lexered, debug)
+        except ValueError as e:
+            return [f"TeXicode: parsing error: {e}"]
+        try:
+            rendered = render(parsed, debug)
+        except ValueError as e:
+            return [f"TeXicode: rendering error: {e}"]
+
     if debug:
         print("Rendering done\n")
 
@@ -43,12 +49,12 @@ def init_arts(options: dict) -> None:
 
 
 def render_tex(tex: str, debug: bool, color: bool,
-               context: str, options: dict) -> str:
+               context: str, options: dict, raise_errors=False) -> str:
 
     init_arts(options)
 
     tex_art = ""
-    tex_rows = render_tex_rows(tex, debug, color)
+    tex_rows = render_tex_rows(tex, debug, color, raise_errors)
     single_line = len(tex_rows) == 1
     if context == "md_inline":
         tex_art = join_rows(tex_rows, False)
