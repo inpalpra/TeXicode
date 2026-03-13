@@ -4,5 +4,5 @@ This file tracks all major tracks for the project. Each track has its own detail
 
 ---
 
-- [~] **Track: Markdown Mode Improvements**
+- [x] **Track: Markdown Mode Improvements**
 *Link: [./tracks/markdown_mode_20260313/](./tracks/markdown_mode_20260313/)*
