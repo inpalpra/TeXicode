@@ -5,7 +5,7 @@ sys.path.insert(0, os.path.abspath(os.path.dirname(__file__)))
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../src')))
 
 import pytest
-from test_data import CORE_TESTS, ALIGNMENT_TESTS
+from test_data import CORE_TESTS, ALIGNMENT_TESTS, OPERATOR_TESTS, SPACING_TESTS
 
 from pipeline import render_tex
 
@@ -17,6 +17,20 @@ def test_core_regressions(tex, expected):
     """
     Data-driven test that covers fundamental syntax: fractions, integrals, sums, 
     limits, binomials, squareroots, and greek symbols.
+    """
+    assert render(tex) == expected
+
+@pytest.mark.parametrize("tex, expected", OPERATOR_TESTS)
+def test_operators(tex, expected):
+    """
+    Tests for mathematical operators.
+    """
+    assert render(tex) == expected
+
+@pytest.mark.parametrize("tex, expected", SPACING_TESTS)
+def test_spacing(tex, expected):
+    """
+    Tests for spacing commands and \phantom.
     """
     assert render(tex) == expected
 

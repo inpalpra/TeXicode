@@ -338,5 +338,33 @@ GRACEFUL_DEGRADATION_TESTS = [
     )
 ]
 
-ALL_TESTS = CORE_TESTS + ALIGNMENT_TESTS + MATRIX_TESTS + OVERSET_TESTS + MATRIX_BRACE_TESTS + STYLING_TESTS + COLOR_TESTS + TAG_TESTS + GRACEFUL_DEGRADATION_TESTS
+OPERATOR_TESTS = [
+    (r"A \implies B", "𝐴⟹𝐵"),
+    (r"A \iff B", "𝐴⟺𝐵"),
+    (r"\therefore \because", "∴∵"),
+    (r"\forall x \exists y", "∀𝑥∃𝑦"),
+    (r"a \approx b \neq c", "𝑎≈𝑏≠𝑐"),
+    (r"x \leq y \geq z", "𝑥≤𝑦≥𝑧"),
+    (r"S \subset T \supset U", "𝑆⊂𝑇⊃𝑈"),
+    (r"A \subseteq B \supseteq C", "𝐴⊆𝐵⊇𝐶"),
+    (r"x \in X \notin Y", "𝑥∈𝑋∉𝑌"),
+    (r"\pm \mp \times \div \cdot", "±∓×÷⋅"),
+    (r"\nabla \partial \infty", "∇∂∞"),
+    (r"\ldots \cdots \vdots \ddots", "…⋯⋮⋱")
+]
+
+SPACING_TESTS = [
+    (r"a \quad b", "𝑎  𝑏"),
+    (r"a \qquad b", "𝑎    𝑏"),
+    (r"a\,b", "𝑎 𝑏"),
+    (r"a\;b", "𝑎 𝑏"),
+    (r"a\:b", "𝑎 𝑏"),
+    (r"a\!b", "𝑎𝑏"),
+    (r"a\hspace{1em}b", "𝑎  𝑏"),
+    (r"a\hspace{2em}b", "𝑎    𝑏"),
+    (r"a\phantom{xxx}b", "𝑎   𝑏"),
+    (r"\frac{a}{\phantom{b}}", " 𝑎 \n╶─╴\n   ")
+]
+
+ALL_TESTS = CORE_TESTS + ALIGNMENT_TESTS + MATRIX_TESTS + OVERSET_TESTS + MATRIX_BRACE_TESTS + STYLING_TESTS + COLOR_TESTS + TAG_TESTS + GRACEFUL_DEGRADATION_TESTS + OPERATOR_TESTS + SPACING_TESTS
 

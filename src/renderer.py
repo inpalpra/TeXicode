@@ -589,6 +589,40 @@ def render_accents(token: tuple, children: list) -> tuple:
     return sketch, children[0][1], children[0][2]
 
 
+def render_hspace(children: list) -> tuple:
+    dim_sketch, _, _ = children[0]
+    dim_chars = []
+    for row in dim_sketch:
+        for char in row:
+            dim_chars.append(util_revert_font(char))
+    dim_str = "".join(dim_chars)
+
+    width = 0
+    if dim_str == "1em":
+        width = 2
+    elif dim_str == "2em":
+        width = 4
+    elif "pt" in dim_str:
+        try:
+            pts = float(dim_str.replace("pt", ""))
+            width = max(1, int(pts / 5))
+        except ValueError:
+            width = 1
+    else:
+        width = 1
+
+    sketch = [[arts.bg] * width]
+    return sketch, 0, []
+
+
+def render_phantom(children: list) -> tuple:
+    sketch, horizon, amps = children[0]
+    new_sketch = []
+    for row in sketch:
+        new_sketch.append([arts.bg] * len(row))
+    return new_sketch, horizon, amps
+
+
 def util_onechar_square_root(children: list) -> tuple:
     # thanks to u/Iron_Pencil for the idea
     radicand_sketch, radicand_horizon, _ = children[-1]

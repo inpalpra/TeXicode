@@ -22,6 +22,9 @@ parent_dependent_type_dict = {
     ("opn_text",  ("symb", "}")):  "cls_text",
     ("opn_text",  ("symb", " ")):  "txt_leaf",
 
+    ("cmd_hspace", ("symb", "{")):  "opn_brac",
+    ("cmd_phantom", ("symb", "{")): "opn_brac",
+
     ("opn_dllr",  ("symb", "$")):  "cls_dllr",
     ("opn_ddlr",  ("symb", "$$")): "cls_ddlr",
     ("cmd_lbrk",  ("symb", "$")):  "cls_dllr",
@@ -99,6 +102,9 @@ type_dict = {
     ("cmnd", "fcolorbox"): "cmd_fcbx",
     ("cmnd",    "\\"): "cmd_lbrk", ("cmnd", "newline"): "cmd_lbrk",
     ("cmnd", "begin"): "cmd_bgin", ("cmnd",     "end"): "cmd_end",
+
+    ("cmnd", "hspace"): "cmd_hspace",
+    ("cmnd", "phantom"): "cmd_phantom",
 
     ("cmnd", "textstyle"): "cmd_styl",
     ("cmnd", "displaystyle"): "cmd_styl",
@@ -416,6 +422,16 @@ type_info_dict = {
                   (True, True, []),
                   (True, False, False),
                   (False, "render_fcolorbox")),
+    "cmd_hspace": ((False, []),
+                   (1,),
+                   (True, True, []),
+                   (True, False, False),
+                   (False, "render_hspace")),
+    "cmd_phantom": ((False, []),
+                    (1,),
+                    (True, True, []),
+                    (True, False, False),
+                    (False, "render_phantom")),
     "cmd_lbrk":  ((True, ["cmd_lbrk", "cls_line", "cls_brak", "cls_pren",
                           "cls_dllr", "cls_ddlr", "cmd_end",]),
                   (1,),
