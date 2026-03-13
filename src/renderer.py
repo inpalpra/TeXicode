@@ -25,6 +25,8 @@ MULTI_LINE_ENVS = {
     ('v','m','a','t','r','i','x'):      ('|', '|'),
     ('V','m','a','t','r','i','x'):      ('\u2016', '\u2016'),
     ('a','l','i','g','n','e','d'):      ('', ''),
+    ('a','l','i','g','n'):              ('', ''),
+    ('a','l','i','g','n','*'):          ('', ''),
     ('s','p','l','i','t'):              ('', ''),
     ('c','a','s','e','s'):              ('{', '.'),
     ('g','a','t','h','e','r'):          ('', ''),
@@ -73,9 +75,63 @@ def util_unshrink(small_char: str) -> str:
     return small_char
 
 
+def get_sketch_cls(sketch):
+    if len(sketch) == 1:
+        import re
+        c = "".join(sketch[0])
+        c = re.sub(r'\x1b\[[0-9;]*m', '', c)
+        
+        # Base character if it's a single character with combinings
+        c_base = c[0] if len(c) > 0 else ""
+        
+        if c in ['==>', '<==>', '-->', '<-->']:
+            return "REL"
+        
+        if c_base in ['=', '≈', '≠', '≤', '≥', '⊂', '⊃', '⊆', '⊇', '∈', '∉', '⟹', '⟺', '≡', '∀', '∃']:
+            return "REL"
+        if c_base in ['+', '-', '±', '∓', '×', '÷', '⋅']:
+            return "BIN"
+        if c_base in [' ', '\t', '\u2002', '\u2003']:
+            return "SKIP"
+    return "ORD"
+
 def util_concat(children: list, concat_line: bool, align_amp: bool) -> tuple:
     if not children:
         return [[]], 0, []
+
+    # Inject spacing based on TeX rules
+    classes = []
+    for c in children:
+        sketch, horizon, amps = c
+        if align_amp and amps:
+            classes.append("BOUNDARY")
+        else:
+            classes.append(get_sketch_cls(sketch))
+            
+    for i in range(len(classes)):
+        if classes[i] == "BIN":
+            if i == 0 or classes[i-1] in ["REL", "BIN", "BOUNDARY"]:
+                classes[i] = "ORD"
+            elif i == len(classes) - 1 or classes[i+1] in ["REL", "BOUNDARY"]:
+                classes[i] = "ORD"
+
+    add_space = [False] * len(classes)
+    for i in range(len(classes) - 1):
+        if classes[i] == "BOUNDARY" or classes[i+1] == "BOUNDARY":
+            continue
+        if classes[i] in ["SKIP"] or classes[i+1] in ["SKIP"]:
+            continue
+        if classes[i] in ["REL", "BIN"] or classes[i+1] in ["REL", "BIN"]:
+            add_space[i] = True
+            
+    new_children = []
+    space_child = ([[" "]], 0, [])
+    for i in range(len(children)):
+        new_children.append(children[i])
+        if i < len(children) - 1 and add_space[i]:
+            new_children.append(space_child)
+            
+    children = new_children
 
     concated_sketch = []
     maxh_sky = 0
@@ -1087,7 +1143,7 @@ def _group_children(children_ids, nodes, canvas):
             if name_tuple == ('a','r','r','a','y'):
                 spec_sketch, _, _ = canvas[cnode[2][1]]
                 align_spec = spec_sketch[0]
-            elif name_tuple in [('a','l','i','g','n','e','d'), ('s','p','l','i','t')]:
+            elif name_tuple in [('a','l','i','g','n','e','d'), ('s','p','l','i','t'), ('a','l','i','g','n'), ('a','l','i','g','n','*')]:
                 align_spec = ['r', 'l'] * 10
             elif name_tuple == ('c','a','s','e','s'):
                 align_spec = ['l', 'l']

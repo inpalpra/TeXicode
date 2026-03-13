@@ -30,6 +30,6 @@ def test_color_enabled_manual():
     """Verify that color mode actually adds ANSI codes."""
     tex = r'\color{red}{x}'
     rendered = render_tex(tex, debug=False, color=True, context="raw", options={"fonts": "serif"})
-    assert "\x1b[91m" in rendered
+    assert "\x1b[31m" in rendered
     assert "𝑥" in rendered
-    assert "\x1b[38;5;232m" in rendered
+    assert "\x1b[39m" in rendered

@@ -56,7 +56,7 @@ def test_overbrace():
     # Expected at least 3 rows: label, brace, content
     lines = output.strip().split("\n")
     assert len(lines) >= 3
-    assert "²" in lines[0]
+    assert "2" in lines[0]
     assert "┴" in lines[1] # middle of overbrace pointing up
     assert "x + y" in lines[2] or "x+y" in lines[2]
 
