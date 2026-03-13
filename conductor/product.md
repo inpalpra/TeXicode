@@ -28,9 +28,9 @@ TeXicode (TeX to Unicode) is a tool that renders TeX math expressions into Unico
 - **Extensible Arrows:** Support for stretched arrows with labels (`\xrightarrow`, `\xleftarrow`).
 - **Equation Tags:** Right-aligned labeling for equations (`\tag`, `\tag*`) with baseline alignment and multi-tag support.
 - **Markdown Processing:** Render math in markdown files, supporting multiline equations and terminal display (e.g., by piping into a markdown renderer like `glow`).
+- **Spacing & Operators:** Support for spacing commands (`\quad`, `\qquad`, `\hspace`, `\phantom`) and a wide range of mathematical operators.
 
 ## Roadmap
 - **Styling Commands:** `\mathbf`, `\mathcal`, etc.
 - **Graceful Degradation:** Intelligent fallback for unsupported commands and environments that reconstructs raw LaTeX source instead of crashing or showing uninformative markers.
-- **Spacing & Operators:** `\quad`, `\enspace`, and better operator spacing.
 - **Markdown Mode:** improvements to markdown file processing.
