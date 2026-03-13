@@ -171,8 +171,11 @@ def main():
 
     if file_path:
         try:
-            with open(file_path, "r") as f:
-                content = f.read()
+            if file_path == "-":
+                content = sys.stdin.read()
+            else:
+                with open(file_path, "r") as f:
+                    content = f.read()
             process_markdown(content, debug, color, options)
         except FileNotFoundError:
             print(f"Error: File '{file_path}' not found.")
@@ -186,6 +189,13 @@ def main():
                 raise e
             print(f"Error: Rendering failed. Use --debug for details.")
             sys.exit(1)
+    elif not sys.stdin.isatty():
+        # If no arguments are provided but input is piped, treat it as markdown
+        content = sys.stdin.read()
+        if content:
+            process_markdown(content, debug, color, options)
+        else:
+            input_parser.print_help()
     else:
         input_parser.print_help()
 
